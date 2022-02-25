@@ -28,34 +28,45 @@ void sendHIGH(struct Protocol *p){
   delayMicroseconds(p->pulse_lenght_short);
 }
 
+/**
+ * Adress can be any value between 0 & 31,
+ * it has to match the Adress dip switches at the Stecker itself. 
+ * Multiple Stecker can have the same Adress
+ * 
+ * Taste has to be either 1,2,4,8
+ * it refers to a specific Stecker of a Group
+ * */
 void collect(int adrr, int taste, int state ,struct Protocol *p){
-  p->nPos = 1;  //  nPos = 0, always startBit 0
   
-  //Reset Array
+  //Reset Array an Pos
+  p->nPos = 1;  //  nPos = 0, always startBit 0
   for (int i = 0; i < PROTOCOL_LENGTH; i++)
   {
+    // (i%2 == 0) ? p->arr[i] = 0 :  p->arr[i] = 1;
     p->arr[i] = 0;
   }
   
-  //write address bits
+  //write address bits, Adress can be any value between 0 & 31, it has to match the dips at the switch. 
+  //All Switches need to be
   for (int i = 0; i < 5; i++) {
-    if (adrr & (1 << i)) {
+    if ( adrr & ( 1 << i ) ) {
       p->arr[p->nPos++] = 1;
       p->nPos++;
     }
     else {
       p->nPos += 2;
+      
     }
   }
 
   // write taste bits
   for (int i = 0; i < 5; i++) {
     if (taste & (1 << i)) {
-      p->arr[p->nPos++] = 1;
-      p->nPos++;
+      p->nPos += 2;
     }
     else {
-      p->nPos += 2;
+      p->arr[p->nPos++] = 1;
+      p->nPos++;
     }
   }
 
@@ -76,16 +87,19 @@ void transmitData(struct Protocol *p){
     
     for ( int i = 0; i < PROTOCOL_LENGTH; i++ ){
 
-      if ( !p->arr[i] ){
-        sendLOW(&protocol);
+      if ( p->arr[i] ){
+        sendHIGH(&protocol);
+        // Serial.print('0');
       }
 
       else{
-        sendHIGH(&protocol);
+        sendLOW(&protocol);
+        // Serial.print('1');
       }
-    delay(10);
     }
+    delay(10);
   }  
+    // Serial.println();
 }
 
 void sendDebug(struct Protocol *p){
@@ -104,14 +118,15 @@ void sendDebug(struct Protocol *p){
 
 void setup() {
  Serial.begin(115200);
+ pinMode(protocol.rxPin, OUTPUT);
 }
 
 void loop() {
-  collect(1,1,false ,&protocol);
+  collect(30,1,false ,&protocol);
   transmitData(&protocol);
   sendDebug(&protocol);
   delay(1000);
-  collect(1,1,true ,&protocol);
+  collect(30,1,true ,&protocol);
   transmitData(&protocol);
   sendDebug(&protocol);
   delay(1000);
