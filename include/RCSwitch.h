@@ -67,6 +67,7 @@ class RCSwitch
 
         void switchON(uint8_t adrr, uint8_t taste);
         void switchOFF(uint8_t adrr, uint8_t taste);
+        void setRepetitions(int rep){repitions = rep;}
 };
 
 
