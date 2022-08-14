@@ -35,7 +35,7 @@ class RCSwitch
          * 
          * taste has to be a specific input num: 1,2,4,8
          * 
-         * unuesed is usually refered to the default values 01
+         * unuesed is usually refered to the default values 10
          * 
          * state can be either 10 00 for LO, or 00 10 for HI
          * 
