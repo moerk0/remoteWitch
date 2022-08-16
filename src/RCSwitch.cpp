@@ -2,12 +2,17 @@
 #include "RCSwitch.h"
 
 
-RCSwitch::RCSwitch(uint8_t pin)
+RCSwitch::RCSwitch(uint8_t pin, uint8_t addr, uint8_t taste)
     :   txPin(pin)
+    ,   address(addr)
+    ,   taste(taste)
     ,   pulse_lenght_short(PULSE_LENGHT)
     ,   pulse_lenght_long (PULSE_LENGHT * 3)
     ,   repitions(10)
-{
+    ,   state(0)
+    ,   delayT(1000)
+    ,   lastChange(0)
+    {
     pinMode(txPin, OUTPUT);
 }
 
@@ -26,7 +31,7 @@ void RCSwitch::sendHIGH(){
 
 
 //see header File for further information
-void RCSwitch::collectPhrase(uint8_t adrr, uint8_t taste, uint8_t state){
+void RCSwitch::collectPhrase(){
   
   //Reset phrase and Pos
   this->nPos = 1;  //  nPos = 0, always startBit 0
@@ -37,7 +42,7 @@ void RCSwitch::collectPhrase(uint8_t adrr, uint8_t taste, uint8_t state){
   
   //write address bits,
   for (uint8_t i = 0; i < 5; i++) {
-    if ( adrr & ( 1 << i ) ) {
+    if ( this->address & ( 1 << i ) ) {
       this->phrase[this->nPos++] = 1;
       this->nPos++;
     }
@@ -49,7 +54,7 @@ void RCSwitch::collectPhrase(uint8_t adrr, uint8_t taste, uint8_t state){
 
   // write taste bits
   for (uint8_t i = 0; i < 5; i++) {
-        if (taste & (1 << i)) {
+        if (this->taste & (1 << i)) {
             this->nPos += 2;
         }
         else {
@@ -59,7 +64,7 @@ void RCSwitch::collectPhrase(uint8_t adrr, uint8_t taste, uint8_t state){
     }
 
   //write state
-    if (state){
+    if (this->state){
 
         this->nPos += 2;
         this->phrase[this->nPos] = 1;
@@ -103,13 +108,15 @@ void RCSwitch::send2Monitor(){
     Serial.println();
 }
 
-void RCSwitch::switchON(uint8_t addr, uint8_t taste){
-    collectPhrase( addr, taste, true );
+void RCSwitch::switchON(){
+    this->state = true;
+    collectPhrase();
     transmitPhrase();
     send2Monitor();
 }
-void RCSwitch::switchOFF(uint8_t addr, uint8_t taste){
-    collectPhrase( addr, taste, false );
+void RCSwitch::switchOFF(){
+    this->state = false;
+    collectPhrase();
     transmitPhrase();
     send2Monitor();
 }

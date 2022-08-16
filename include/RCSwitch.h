@@ -11,6 +11,10 @@ class RCSwitch
         //TransmitterPin
         int txPin;
 
+        //Adress of specific Plug
+        int address;
+        int taste;
+
         /**One Short pulse HI + One Long Pulse LO = LO
          * One Long pulse HI + One Short Pulse LO = HI
         **/
@@ -39,7 +43,7 @@ class RCSwitch
          * 
          * state can be either 10 00 for LO, or 00 10 for HI
          * 
-         * Only every second bits differ. in the example above they ar marked as 1
+         * Only every second bits differ. in the example above they are marked as 1
          * 
          * if addr. or taste is selected the corresponding bit is set to LO
          * 
@@ -52,22 +56,30 @@ class RCSwitch
         int phrase[PHRASE_LENGHT] = {0};
         int nPos;
 
+        bool state;
+        int delayT;
+        unsigned long lastChange;
+
         
         void sendHIGH();
         void sendLOW();
 
 
-        void collectPhrase(uint8_t adrr, uint8_t taste, uint8_t state);
+        void collectPhrase();
         void transmitPhrase();
         void send2Monitor();
 
 
     public:
-        RCSwitch(uint8_t);
+        RCSwitch(uint8_t, uint8_t,uint8_t);
 
-        void switchON(uint8_t adrr, uint8_t taste);
-        void switchOFF(uint8_t adrr, uint8_t taste);
+
+        void switchON();
+        void switchOFF();
+        void switchChange(uint8_t adrr, uint8_t taste);
         void setRepetitions(int rep){repitions = rep;}
+        void setDelayT(int d){d = delayT;}
+        void setOffset(int o){o = lastChange;}
 };
 
 
