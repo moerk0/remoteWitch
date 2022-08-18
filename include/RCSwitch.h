@@ -1,7 +1,7 @@
 #ifndef RCSWICH_H
 #define RCSWICH_H
 #define PHRASE_LENGHT   25
-#define PULSE_LENGHT    320
+#define PULSE_LENGHT    320  
 #include <Arduino.h>
 
 class RCSwitch
@@ -11,7 +11,7 @@ class RCSwitch
         //TransmitterPin
         int txPin;
 
-        //Adress of specific Plug
+        //address of specific Plug
         int address;
         int taste;
 
@@ -37,7 +37,7 @@ class RCSwitch
          * Address is a value between 0 & 31, it has to match the dip switches
          * on the physical RC plug. Multiple plugs can have the same Addr
          * 
-         * taste has to be a specific input num: 1,2,4,8
+         * taste has to be a specific input address: 1,2,4,8
          * 
          * unuesed is usually refered to the default values 10
          * 
@@ -57,7 +57,7 @@ class RCSwitch
         int nPos;
 
         bool state;
-        int delayT;
+        unsigned int delayT;
         unsigned long lastChange;
 
         
@@ -76,10 +76,15 @@ class RCSwitch
 
         void switchON();
         void switchOFF();
-        void switchChange(uint8_t adrr, uint8_t taste);
+        void switchChange();
+        
         void setRepetitions(int rep){repitions = rep;}
-        void setDelayT(int d){d = delayT;}
-        void setOffset(int o){o = lastChange;}
+        void setDelayT(int d);
+        void setLastChange(unsigned long o);
+
+        unsigned int getDelayT(){return delayT;}
+        unsigned long getLastChange(){return lastChange;}
+        bool getState(){return state;}
 };
 
 

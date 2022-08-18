@@ -10,7 +10,7 @@ RCSwitch::RCSwitch(uint8_t pin, uint8_t addr, uint8_t taste)
     ,   pulse_lenght_long (PULSE_LENGHT * 3)
     ,   repitions(10)
     ,   state(0)
-    ,   delayT(1000)
+    ,   delayT(10000)
     ,   lastChange(0)
     {
     pinMode(txPin, OUTPUT);
@@ -119,4 +119,18 @@ void RCSwitch::switchOFF(){
     collectPhrase();
     transmitPhrase();
     send2Monitor();
+}
+
+void RCSwitch::switchChange(){
+  this->state = !this->state;
+    collectPhrase();
+    transmitPhrase();
+    send2Monitor();
+}
+void RCSwitch::setLastChange(unsigned long o){
+  this->lastChange = o;
+}
+
+void RCSwitch::setDelayT(int d){
+  this->delayT = d;
 }
