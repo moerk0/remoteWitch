@@ -1,7 +1,7 @@
 #ifndef RCSWICH_H
 #define RCSWICH_H
 #define PHRASE_LENGHT   25
-#define PULSE_LENGHT    320  
+#define PULSE_LENGHT    318  
 #include <Arduino.h>
 
 class RCSwitch
@@ -9,11 +9,11 @@ class RCSwitch
     private:
 
         //TransmitterPin
-        int txPin;
+        const uint8_t txPin;
 
         //address of specific Plug
-        int address;
-        int taste;
+        const uint8_t address;
+        const uint8_t taste;
 
         /**One Short pulse HI + One Long Pulse LO = LO
          * One Long pulse HI + One Short Pulse LO = HI
@@ -57,8 +57,7 @@ class RCSwitch
         int nPos;
 
         bool state;
-        unsigned int delayT;
-        unsigned long lastChange;
+
 
         
         void sendHIGH();
@@ -79,12 +78,9 @@ class RCSwitch
         void switchChange();
         
         void setRepetitions(int rep){repitions = rep;}
-        void setDelayT(int d);
-        void setLastChange(unsigned long o);
-
-        unsigned int getDelayT(){return delayT;}
-        unsigned long getLastChange(){return lastChange;}
+       
         bool getState(){return state;}
+
 };
 
 

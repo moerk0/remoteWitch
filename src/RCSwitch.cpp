@@ -10,8 +10,6 @@ RCSwitch::RCSwitch(uint8_t pin, uint8_t addr, uint8_t taste)
     ,   pulse_lenght_long (PULSE_LENGHT * 3)
     ,   repitions(10)
     ,   state(0)
-    ,   delayT(10000)
-    ,   lastChange(0)
     {
     pinMode(txPin, OUTPUT);
 }
@@ -94,18 +92,23 @@ void RCSwitch::transmitPhrase(){
 
 void RCSwitch::send2Monitor(){
 
-    for (int i = 0; i < PHRASE_LENGHT; i++){
+    // for (int i = 0; i < PHRASE_LENGHT; i++){
 
-        Serial.print(this->phrase[i]);
+    //     Serial.print(this->phrase[i]);
         
-        if ( i%2 == 0 )
-            Serial.print(" ");
+    //     if ( i%2 == 0 )
+    //         Serial.print(" ");
         
-        if ( i%10== 0 )
-            Serial.print('\t');
+    //     if ( i%10== 0 )
+    //         Serial.print('\t');
     
-    }
-    Serial.println();
+    // }
+    Serial.print("Plug: ");
+    Serial.print(this->address);
+    Serial.print("/");
+    Serial.print(this->taste);
+    Serial.print(" is now: ");
+    Serial.println(this->state);
 }
 
 void RCSwitch::switchON(){
@@ -127,10 +130,4 @@ void RCSwitch::switchChange(){
     transmitPhrase();
     send2Monitor();
 }
-void RCSwitch::setLastChange(unsigned long o){
-  this->lastChange = o;
-}
 
-void RCSwitch::setDelayT(int d){
-  this->delayT = d;
-}
