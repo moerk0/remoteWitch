@@ -18,11 +18,11 @@ class RCSwitch
         /**One Short pulse HI + One Long Pulse LO = LO
          * One Long pulse HI + One Short Pulse LO = HI
         **/
-        int pulse_lenght_short;
-        int pulse_lenght_long ;
+        const uint16_t pulse_lenght_short;
+        const uint16_t pulse_lenght_long ;
         
         // times phrase is sent 
-        int repitions;
+        uint8_t repitions;
 
         /**the actual phrase being sent. it looks like this:
          *          
@@ -54,7 +54,7 @@ class RCSwitch
          *  0   |  10 00 10 10 10 | 00 10 10 10 | 10 | 00 10
         **/
         int phrase[PHRASE_LENGHT] = {0};
-        int nPos;
+        uint8_t nPos;
 
         bool state;
 
@@ -77,7 +77,7 @@ class RCSwitch
         void switchOFF();
         void switchChange();
         
-        void setRepetitions(int rep){repitions = rep;}
+        void setRepetitions(uint8_t rep){repitions = rep;}
        
         bool getState(){return state;}
 

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Button.h>
 
-Button::Button(int but_pin,int but_address, int debounce_time)
+Button::Button(uint8_t but_pin,uint8_t but_address, uint16_t debounce_time)
     :   pin(but_pin)
     ,   address(but_address)
     ,   debounceT(debounce_time)
