@@ -2,6 +2,13 @@
 #define RCSWICH_H
 #define PHRASE_LENGHT   25
 #define PULSE_LENGHT    318  
+
+#define ADDR_1 30
+#define ADDR_2 29
+#define ADDR_3 27
+#define TASTE_A 1
+#define TASTE_B 2
+
 #include <Arduino.h>
 
 class RCSwitch

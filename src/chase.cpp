@@ -17,7 +17,7 @@ ChasePLUGS::ChasePLUGS(int numPlugs, unsigned long advanceTime)
 
 }
 
-int ChasePLUGS::time2change(byte mode){
+int ChasePLUGS::getNextPlug(byte mode){
 
 
     if ((millis() - _lastChange) >= _advanceTime) {

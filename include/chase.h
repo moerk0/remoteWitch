@@ -13,7 +13,7 @@
  public:
    ChasePLUGS( int numPlugs, unsigned long advanceTime);
 
-   int time2change(byte mode);
+   int getNextPlug(byte mode);
 
     unsigned long advanceTime() const { return _advanceTime; }
     void setAdvanceTime(unsigned long advanceTime) { _advanceTime = advanceTime; }
