@@ -1,42 +1,35 @@
  
 #include "chase.h"
 #include <Arduino.h>
-#include <RCSwitch.h>
 
-enum Mode{
-    clockwise,
-    anticlockwise,
-};
+
+
  
 ChasePLUGS::ChasePLUGS(int numPlugs, unsigned long advanceTime)
     : _numPlugs(numPlugs)
     , _currentIndex(0)
-    , _advanceTime(advanceTime)
+    , _defaultTime(advanceTime)
     , _lastChange(0)
-{
-
-}
+    {
+        _advanceTime = _defaultTime;
+    }
 
 int ChasePLUGS::getNextPlug(byte mode){
-
-
+    _mode = mode;
+    
     if ((millis() - _lastChange) >= _advanceTime) {
-        // switch (mode){
-        //     case clockwise:
-                
-                _currentIndex++ ;
-                _currentIndex %= _numPlugs;
-            // break;
+        switch (mode){
+            case chase:
+            _currentIndex++ ;
+            _currentIndex %= _numPlugs;
+            break;
 
-            // case anticlockwise:
-            //     advance(previousPin(snake), _pins[_currentIndex], mode);
-            //     if(_currentIndex == 0)
-            //         _currentIndex = _numPlugs - 1;
-            //     else
-            //     _currentIndex--;
-            // break;
-        
+            case randomIndexChase:
+            _prevIndex = _currentIndex;
+            _currentIndex = random(0,_numPlugs);
+            break;
 
+        }
         _lastChange = millis();
         return _currentIndex;
     }
@@ -47,10 +40,31 @@ int ChasePLUGS::getNextPlug(byte mode){
  
 
  uint8_t ChasePLUGS::previousPlug(int n){
-     
+    if (_mode == chase)
+    {
     int result;
-    result =(_currentIndex + _numPlugs - n) % _numPlugs; 
+    result =(_currentIndex + _numPlugs - n ) % _numPlugs; 
     (result == -1) ? result = _numPlugs - 1 : result = result;
-    return result;
+    return result;    
+    }
+    else if(_mode == randomIndexChase){
+        return _prevIndex;
+    }
+    else{
+        return 0;
+    }
+
+ }
+
+void ChasePLUGS::IdleIntervalHandler(int firstT, int secondT, int changeAfterNTries){
+    static int tries;
+    if(firstT == 0){
+        tries = 0;
+    }
+    else{
+        if(tries <= changeAfterNTries)this->_advanceTime = firstT;
+        else this->_advanceTime = secondT;
+    tries++;
+    }
 
  }

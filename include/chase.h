@@ -3,32 +3,41 @@
  #define CHASE_H
  
  #include <Arduino.h>
- #include <RCSwitch.h>
 
 
+enum Mode{
+    chase,
+    randomIndexChase,
+    randomIntervalChase,
+};
 
 
  class ChasePLUGS
  {
  public:
-   ChasePLUGS( int numPlugs, unsigned long advanceTime);
+   ChasePLUGS(int numPlugs, unsigned long advanceTime);
 
-   int getNextPlug(byte mode);
+    int getNextPlug(byte mode);
+    int getPrevIndex(){return _prevIndex;}
 
-    unsigned long advanceTime() const { return _advanceTime; }
+    void IdleIntervalHandler(int firstT, int secondT, int changeAfterNTries);
+    unsigned long advanceTime() { return _advanceTime; }
     void setAdvanceTime(unsigned long advanceTime) { _advanceTime = advanceTime; }
-   //if u run in anticlkw mode, setSnake will also be reveresed
     void setSnake(int seqLeng){ snake = seqLeng ; }
     uint8_t previousPlug(int n);
-    void setAdvanceTime(int t){_advanceTime = t;}
+    //void setAdvanceTime(int t){_advanceTime = t;}
          
  
  private:
-     int _numPlugs;
-     unsigned int _currentIndex;
-     unsigned long _advanceTime;
-     unsigned long _lastChange;
-     int snake;
+    int _numPlugs;
+    unsigned int _currentIndex;
+    unsigned long _defaultTime;
+    unsigned long _lastChange;
+
+    unsigned int _prevIndex;
+    unsigned long _advanceTime;
+    uint8_t _mode;
+    int snake;
  };
  
  #endif

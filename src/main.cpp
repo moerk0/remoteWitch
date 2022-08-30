@@ -14,13 +14,15 @@
 
 #define DEFAULT_DELAY 2400
 
-struct TimeManager{
-  int delay_on;
-  int delay_off;
-};
 enum RunStates{
   standby,
   running,
+};
+uint8_t fsm_state;
+
+enum PlugStates{
+  idle,
+  chaotic,
 };
 
 enum Plugs{
@@ -38,8 +40,8 @@ enum Buttons{
 };
 
 Button but(BUTTON_PIN,but0,BUTTON_DEBOUNCE);
-ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
 RGB_LED led(RED_PIN, GREEN_PIN,BLUE_PIN);
+ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
 
 RCSwitch rc[] = {
   RCSwitch(RC_PIN,ADDR_1,TASTE_A),RCSwitch(RC_PIN,ADDR_1,TASTE_B),
@@ -50,54 +52,88 @@ RCSwitch rc[] = {
 void setup() {
  Serial.begin(115200);
  led.setFunction(Fade);
+
+ randomSeed(analogRead(A0));
+}
+ void turnOffAllPlugs(){
+  for (int i = 0; i < cnt_plug; i++)
+    {
+      rc[i].switchOFF();
+      delay(5);
+    }
+ }
+
+void plugTask(uint8_t state){
+  static int turnOffTries;
+  
+  switch (state)
+  {
+    case idle:
+    {
+      int nextPlug = handler.getNextPlug(chase);
+      
+      
+      if (nextPlug>=0){
+        
+        if(fsm_state == standby){
+          handler.IdleIntervalHandler(500,5000,5*cnt_plug);
+          Serial.println(handler.advanceTime());
+          
+          rc[nextPlug].switchOFF();
+          turnOffTries++;
+        }
+        if(fsm_state == running){
+          handler.IdleIntervalHandler(1000,10000,5*cnt_plug);
+          Serial.println(handler.advanceTime());
+          rc[nextPlug].switchON();
+        }
+
+      }
+    break;
+    }
+  
+    case chaotic:
+    {
+      int nextPlug = handler.getNextPlug(randomIndexChase);
+      if(turnOffTries)turnOffTries = 0;
+
+      if(nextPlug>=0){
+        handler.setAdvanceTime(random(100,2500));
+        Serial.println(handler.advanceTime());
+                                    // Serial.print("--------Begin Circle-------- \nCurrent Plug:");
+                                    // Serial.println(nextPlug);
+        rc[nextPlug].switchON();
+        delay(5);
+        int prev_p = handler.previousPlug(1);
+        rc[prev_p].switchOFF();
+                                    // Serial.print("Previous PLug: ");
+                                    // Serial.println(prev_p);
+                                    // Serial.println("--------End of Circle--------");
+      }
+    break;
+    }
+  }
 }
 
 
-void statemamschine(uint8_t state){
-  static int turnOffTries;
-  int nextPlug = handler.getNextPlug(0);
-  switch (state)
+void statemaschine(){
+  switch (fsm_state)
   {
   case standby:
-    if (turnOffTries<=10)handler.setAdvanceTime(100);
-    else handler.setAdvanceTime(10000);
-      
-    if (nextPlug>=0)
-    {
-      for (int i = 0; i < cnt_plug; i++)
-      {
-        rc[i].switchOFF();
-        delay(5);
-      }
-      
-      turnOffTries++;
-    }
-
-    led.setFunction(Fade);
+  {
+    plugTask(idle);
+    if(led.getFunction() != Fade) led.setFunction(Fade);
     led.run();
     
     break;
+  }
   case running:
-    handler.setAdvanceTime(2400);
-    if(turnOffTries)turnOffTries = 0;
-
-    if(nextPlug>=0){
-      // Serial.print("--------Begin Circle-------- \nCurrent Plug:");
-      // Serial.println(nextPlug);
-      rc[nextPlug].switchON();
-      delay(5);
-      int prev_p = handler.previousPlug(1);
-      rc[prev_p].switchOFF();
-      // Serial.print("Previous PLug: ");
-      // Serial.println(prev_p);
-      // Serial.println("--------End of Circle--------");
-
-
-    }
+  {
+    plugTask(idle);
     break;
-  
+  }
   default:
-  state = standby;
+
     break;
   }
 }
@@ -108,8 +144,14 @@ int turnOffTries = 0;
 void loop() {
   but.setLogic();
   but.printLogic();
-  if(but.getLogic())statemamschine(running);
-  else statemamschine(standby);
+
+  // reset try counter after button is pushed
+  if(!but.getVolantile())handler.IdleIntervalHandler(0,0,0);
+  
+  if(but.getLogic())fsm_state = running;
+  else fsm_state = standby;
+  statemaschine();
+
   
 }
 
