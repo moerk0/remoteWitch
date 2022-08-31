@@ -2,46 +2,19 @@
 #include <millisDelay.h>
 #include <RGB_LED.h>
 
+#include "globals.h"
+#include "config.h"
 #include "RCSwitch.h"
 #include "Button.h"
 #include "chase.h"
+#include "light.h"
 
-#define RC_PIN 13
-#define BUTTON_PIN 7
-#define RED_PIN 6
-#define GREEN_PIN 5
-#define BLUE_PIN 9
 
-#define DEFAULT_DELAY 2400
-
-enum RunStates{
-  standby,
-  running,
-};
-uint8_t fsm_state;
-
-enum PlugStates{
-  idle,
-  chaotic,
-};
-
-enum Plugs{
-  plug0,
-  plug1,
-  plug2,
-  plug3,
-  plug4,
-  plug5,
-  cnt_plug,
-};
-
-enum Buttons{
-  but0
-};
 
 Button but(BUTTON_PIN,but0,BUTTON_DEBOUNCE);
 RGB_LED led(RED_PIN, GREEN_PIN,BLUE_PIN);
 ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
+Light but_light(BUTTON_LED_PIN);
 
 RCSwitch rc[] = {
   RCSwitch(RC_PIN,ADDR_1,TASTE_A),RCSwitch(RC_PIN,ADDR_1,TASTE_B),
@@ -124,6 +97,7 @@ void statemaschine(){
     plugTask(idle);
     if(led.getFunction() != Fade) led.setFunction(Fade);
     led.run();
+    but_light.run(150);
     
     break;
   }
