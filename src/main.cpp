@@ -4,6 +4,7 @@
 #include <MIDIUSB.h>
 #include <pitchToNote.h>
 #include <NewPing.h>
+#include <millisDelay.h>
 
 #include "globals.h"
 #include "config.h"
@@ -15,7 +16,7 @@
 
 
 
-
+millisDelay ms;
 Button but(BUTTON_PIN,but0,BUTTON_DEBOUNCE);
 RGB_LED rgb(RED_PIN, GREEN_PIN,BLUE_PIN);
 ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
@@ -28,10 +29,25 @@ RCSwitch rc[] = {
   };
 
 
+byte mapSonarVal(uint64_t inp){
+  byte out = map(inp, 0, MAX_DIST,127,0);
+  
+  // out = constrain(out, 127, 250);
+  // out +=127;
+  
+  
+  
+  return out;
+}
+
 void printSonar() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // Here's where you can add code.
-   Serial.println(sonar.ping_result / US_ROUNDTRIP_CM);
+  Serial.print("sonar.ping_result: ");
+  Serial.print(sonar.ping_result / US_ROUNDTRIP_CM);
+  Serial.print(" | mapSonarVal: ");
+  Serial.println(mapSonarVal(sonar.ping_result / US_ROUNDTRIP_CM));
+  controlChange(MIDI_CH, MIDI_CC_10, mapSonarVal(sonar.ping_result / US_ROUNDTRIP_CM));
   }
 
 
@@ -76,7 +92,6 @@ void plugTask(uint8_t state){
         
         
           handler.IdleIntervalHandler(500,5000,5*cnt_plug); // sends (5*cntplug) times with 500ms distance, then 5000k
-          Serial.println(handler.advanceTime());
           
           rc[nextPlug].switchOFF();
       }
@@ -88,7 +103,6 @@ void plugTask(uint8_t state){
       if (nextPlug>=0){
 
         handler.IdleIntervalHandler(1000,10000,5*cnt_plug);
-        Serial.println(handler.advanceTime());
         rc[nextPlug].switchON();
         }
 
@@ -101,7 +115,6 @@ void plugTask(uint8_t state){
 
       if(nextPlug>=0){
         handler.setAdvanceTime(random(100,2500));
-        Serial.println(handler.advanceTime());
         rc[nextPlug].switchON();
         delay(5);
         int prev_p = handler.previousPlug(1);
@@ -119,7 +132,7 @@ void statemaschine(byte fsm_state){
   {
   case standby:
   {
-    plugTask(default_off);
+    // plugTask(default_off);
     rgb.setFunction(Fade);
     rgb.run();
     licht.run();
@@ -130,12 +143,23 @@ void statemaschine(byte fsm_state){
   {
     licht.off();
     rgb.setFunction(Fade);
-    plugTask(default_on);
+    // plugTask(default_on);
     sonarTask();
     break;
   }
-  default:
+  case chaotic:
+  {
+    uint64_t t = millis();
+  
+    if (millis()- t > 10)
+    {
+    controlChange(MIDI_CH, 11, currentMidiControl(0,127));
+    MidiUSB.flush();
+    t = millis();
+    }
 
+    
+   }
     break;
   }
 }
@@ -144,15 +168,15 @@ void statemaschine(byte fsm_state){
 int turnOffTries = 0;
 
 void loop() {
-  but.setLogic();
-  but.printLogic(MIDI_CH,pitchC3,255,&noteOn);
+  // but.setLogic();
+  // but.printLogic(MIDI_CH,pitchC3,255,&noteOn);
  
 
-  // reset try counter after button is pushed
-  if(!but.getVolantile())handler.IdleIntervalHandler(0,0,0);
+  // // reset try counter after button is pushed
+  // if(!but.getVolantile())handler.IdleIntervalHandler(0,0,0);
   
-  if(but.getLogic())statemaschine(running);
-  else statemaschine(standby);
+  // if(but.getLogic())statemaschine(running);
+  // else statemaschine(standby);
   MidiUSB.flush();
 }
 

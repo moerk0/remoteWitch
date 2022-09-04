@@ -14,7 +14,8 @@
 #define PING_INTERVAL 50
 
 #define MIDI_CH 0
-#define MIDI_CC 10
+#define MIDI_CC_10 10
+#define MIDI_CC_11 11
 
 #define DEFAULT_DELAY 2400
 
