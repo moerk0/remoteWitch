@@ -32,7 +32,7 @@ class Button
     bool getLogic(){return state_logic;}
     bool getVolantile(){return state;}
 
-    void printLogic();
+    void printLogic(byte a, byte b ,byte c,void(*func)(byte,byte,byte));
     void printVolantile();
 
 };

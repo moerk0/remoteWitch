@@ -48,17 +48,21 @@ void Button::setVolantile(){
 }
 
 
-void Button::printLogic(){
+
+void Button::printLogic(byte a, byte b, byte c,void(*func)(byte,byte,byte)){
     if (this->state_logic && this->gate_print) {
         Serial.println("e" + String(this->address) + ":" + String(this->state_logic)); 
         this->gate_print = !this->gate_print;
+        func(a,b,c);
     }
 
     if (!this->state_logic && !this->gate_print){
         Serial.println("e" + String(this->address) + ":" + String(this->state_logic));   
         this->gate_print = !this->gate_print;
+        func(a,b,c);
     }
 }
+
 
 void Button::printVolantile(){
     if(this->state == LOW ){ 
