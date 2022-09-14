@@ -3,27 +3,52 @@
 
 
 
-Light::Light(uint8_t pin):_pin(pin), _fade_val(0), _last_change(millis()), _function(linearFade)
+Light::Light(uint8_t pin):_pin(pin), _fade_val(0), _last_change(millis())
 {
     setFadeOptions(10,50);
     pinMode(_pin, OUTPUT);
 }
 
-void Light::run(){
-    if(millis() - _last_change > _fade_interval){
-        switch (_function)
-        {
-        case linearFade:
-            fade();
-            writeOutput();
-            break;
-        case blink:
-            toggle();
-        case logarithmicFade:
-            digitalWrite(_pin, logSleep());
-        }
-        _last_change = millis();
+
+void Light::startTimer(uint16_t t){
+    _last_change = millis();
+    _interval = t;
+}
+bool Light::checkTimer(){
+    if (millis() - _last_change >= _interval)return true;
+    else return false;
+}
+
+void Light::blink(uint16_t interval){
+    if(checkTimer()){
+        startTimer(interval);
+        toggle();
     }
+}
+
+void Light::blink(uint16_t onT, uint16_t offT){
+    if(checkTimer()){
+        if(!digitalRead(_pin))startTimer(onT);
+        else startTimer(offT);
+        toggle();
+    }
+}
+
+void Light::blink(){
+    if(checkTimer()){
+        startTimer(_interval);
+        toggle();
+    }
+}
+
+void Light::fade(){
+    if (checkTimer())
+    {
+        startTimer(_fade_interval);
+        calcNextStep();
+        analogWrite(_pin, _fade_val);
+    }
+    
 }
 
 void Light::writeOutput(){
@@ -35,16 +60,15 @@ void Light::setFadeOptions(uint8_t steps, uint16_t interval){
     _fade_interval = interval;
 }
 
-void Light::fade(){
-    static bool descending;
-    if(!descending){
+void Light::calcNextStep(){
+    if(!_descending){
         if(_fade_val + _fade_steps <= 255){
             _fade_val += _fade_steps;
         }
     
         else{
             _fade_val = 255;
-            descending = true;
+            _descending = true;
         }
     }
     else{
@@ -53,7 +77,7 @@ void Light::fade(){
         }
         else{
             _fade_val = 10;
-            descending = false;
+            _descending = false;
         }
     }
 
@@ -67,11 +91,3 @@ void Light::toggle(){
     digitalWrite(_pin, !digitalRead(_pin));
 }
 
-uint16_t Light::logSleep(){
-    _pwm_interval = 100;
-    static float r = (_pwm_interval * log10(2))/(log10(255));
-    static uint8_t interval;
-    if(interval >= _pwm_interval)interval = 0;
-    return pow(2, (interval++ / r)) - 1;
-
-}

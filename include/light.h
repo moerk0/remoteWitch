@@ -4,15 +4,6 @@
 
 #include <Arduino.h>
 
-enum LightFunctions{
-    solid,
-    blink,
-    linearFade,
-    logarithmicFade,
-
-};
-
-
 class Light
 {
 private:
@@ -21,18 +12,25 @@ private:
     uint64_t _last_change;
     uint8_t _fade_steps;
     uint16_t _fade_interval;
-    uint8_t _function;
-    uint8_t _pwm_interval;
+    uint16_t _interval;
+    bool _descending;
 
-    void fade();
+    void calcNextStep();
     void writeOutput();
-    uint16_t logSleep();
+    
+    void startTimer(uint16_t);
+    bool checkTimer();
 public:
     Light(uint8_t pin );
-    void run();
     void setFadeOptions(uint8_t steps, uint16_t interval);
+    void setInterval(uint16_t t){_interval = t;}
     void off();
     void toggle();
+    
+    void blink();
+    void blink(uint16_t interval);
+    void blink(uint16_t onT, uint16_t offT);
+    void fade();
 
 };
 #endif
