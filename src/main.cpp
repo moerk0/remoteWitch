@@ -4,7 +4,6 @@
 #include <MIDIUSB.h>
 #include <pitchToNote.h>
 #include <NewPing.h>
-#include <millisDelay.h>
 
 #include "globals.h"
 #include "config.h"
@@ -12,11 +11,11 @@
 #include "Button.h"
 #include "chase.h"
 #include "light.h"
-#include "midi_helper.h"
+#include "filter.h"
+#include "helper.h"
 
 
 
-millisDelay ms;
 Button but(BUTTON_PIN,but0,BUTTON_DEBOUNCE);
 RGB_LED rgb(RED_PIN, GREEN_PIN,BLUE_PIN);
 ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
@@ -28,17 +27,14 @@ RCSwitch rc[] = {
   RCSwitch(RC_PIN,ADDR_3,TASTE_A),RCSwitch(RC_PIN,ADDR_3,TASTE_B),
   };
 
+/*
+CC_X = Freq
+CC_X+1 = gain
+CC X+2 = bandwith
+*/
+Filter lpf(10);
+Filter bpf[NUM_FILTER]= {Filter(13),Filter(16),Filter(19)};
 
-byte mapSonarVal(uint64_t inp){
-  byte out = map(inp, 0, MAX_DIST,127,0);
-  
-  // out = constrain(out, 127, 250);
-  // out +=127;
-  
-  
-  
-  return out;
-}
 
 void printSonar() { // Timer2 interrupt calls this function every 24uS where you can check the ping status.
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
@@ -47,7 +43,7 @@ void printSonar() { // Timer2 interrupt calls this function every 24uS where you
   Serial.print(sonar.ping_result / US_ROUNDTRIP_CM);
   Serial.print(" | mapSonarVal: ");
   Serial.println(mapSonarVal(sonar.ping_result / US_ROUNDTRIP_CM));
-  controlChange(MIDI_CH, MIDI_CC_10, mapSonarVal(sonar.ping_result / US_ROUNDTRIP_CM));
+  lpf.change(freqency, mapSonarVal(sonar.ping_result / US_ROUNDTRIP_CM));
   }
 
 
@@ -73,6 +69,13 @@ void setup() {
   
   sonar.pingTimer = millis(); // Start ping time now.
   randomSeed(analogRead(A0));
+
+//setting of Filters
+  for(int i = 0; i<NUM_FILTER;i++){
+    if (i%2 == 0)bpf[i].sinus(gain,reverse);
+    bpf[i].normalize(gain);
+    
+  }
 }
 
 
@@ -135,7 +138,7 @@ void statemaschine(byte fsm_state){
     // plugTask(default_off);
     rgb.setFunction(Fade);
     rgb.run();
-    licht.run();
+    licht.fade();
     
     break;
   }
@@ -149,18 +152,11 @@ void statemaschine(byte fsm_state){
   }
   case chaotic:
   {
-    uint64_t t = millis();
-  
-    if (millis()- t > 10)
-    {
-    controlChange(MIDI_CH, 11, currentMidiControl(0,127));
-    MidiUSB.flush();
-    t = millis();
-    }
-
-    
-   }
+    randomSeed(analogRead(A0));
+    uint32_t t = random(300000,600000);
+    plugTask(chaotic);
     break;
+    }
   }
 }
 
@@ -169,7 +165,7 @@ int turnOffTries = 0;
 
 void loop() {
   // but.setLogic();
-  // but.printLogic(MIDI_CH,pitchC3,255,&noteOn);
+  but.printLogic(MIDI_CH,pitchC3,255,&noteOn);
  
 
   // // reset try counter after button is pushed
@@ -177,6 +173,7 @@ void loop() {
   
   // if(but.getLogic())statemaschine(running);
   // else statemaschine(standby);
+  statemaschine(chaotic);
   MidiUSB.flush();
 }
 
