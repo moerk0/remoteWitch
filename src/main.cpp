@@ -3,7 +3,7 @@
 #include <RGB_LED.h>
 #include <pitchToNote.h>
 #include <NewPing.h>
-//__ #include <TM1637Display.h>
+  #include <TM1637Display.h>
 
 #include "globals.h"
 #include "config.h"
@@ -15,8 +15,8 @@
 #include "helper.h"
 
 
-//__ TM1637Display display(CLK, DIO);
-Button but(BUTTON_PIN,but0,BUTTON_DEBOUNCE);
+  TM1637Display display(CLK, DIO);
+Button but(BUTTON_PIN,but0,LONG_PRESS_T);
 RGB_LED rgb(RED_PIN, GREEN_PIN,BLUE_PIN);
 ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
 NewPing sonar(TRIG_PIN,ECHO_PIN,MAX_DIST);uint16_t result_cm;
@@ -41,8 +41,8 @@ void setup() {
   Serial.begin(115200);
   rgb.setFunction(Fade);
 
-  //__ display.setBrightness(0x0f);
-  //__ display.clear();
+    display.setBrightness(0x0f);
+    display.clear();
   
   sonar.pingTimer = millis(); // Start ping time now.
   randomSeed(analogRead(A0));
@@ -51,7 +51,7 @@ void setup() {
 lpf.change(freqency,20);
   for(int i = 0; i<N_BPF;i++){
     if (i%2 == 0)bpf[i].sinus(gain); //set even numbers ascending =false
-    bpf[i].normalize(gain);         // all values easy
+    // bpf[i].normalize(gain);         // all values easy
     
   }
 }
@@ -61,9 +61,9 @@ void sonarTask() { // Timer2 interrupt calls this function every 24uS where you 
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // Here's where you can add code.
   result_cm = sonar.convert_cm(sonar.ping_result);
-  sonarMsg(result_cm, sonar.ping_result/US_ROUNDTRIP_CM);
+  sonarMsg(result_cm);
   lpf.change(freqency, mapSonarVal(result_cm));
-  //__ display.showNumberDec(result_cm);
+    display.showNumberDec(result_cm);
 
   }
 
@@ -109,7 +109,7 @@ void plugTask(uint8_t state){
       if(nextPlug>=0){
         handler.setAdvanceTime(random(100,2500));
         rc[nextPlug].switchON();
-        delay(5);
+        delay(1);
         int prev_p = handler.previousPlug(1);
         rc[prev_p].switchOFF();
       }
@@ -125,7 +125,8 @@ void statemaschine(byte fsm_state){
   {
   case standby:
   {
-    // plugTask(default_off);
+    plugTask(default_off);
+    display.setSegments(SEG_Stnd);
     rgb.setFunction(Fade);
     rgb.run();
     licht.fade();
@@ -136,43 +137,43 @@ void statemaschine(byte fsm_state){
   {
     licht.off();
 
-    plugTask(default_on);
+    // plugTask(default_on);
     checkSonar();
     break;
   }
   case chaotic:
   {
     randomSeed(analogRead(A0));
-    uint64_t kaos = millis();
-    uint32_t t = random(3000,6000);
-    //__ display.setSegments(SEG_CAOS); 
-    while (millis()-kaos < t)
-    {
+    display.setSegments(SEG_CAOS); 
+    // while (millis()-kaos < t)
+    
       licht.blink(random(10,1000));
-      plugTask(chaotic);
+      // plugTask(chaotic);
+      checkSonar();
 
       for (int i = 0; i < N_BPF; i++)
       {
-        bpf[i].automate(gain,random_interval,100,16,127);
+        bpf[i].automate(gain,new_interval,10);
         // bpf[i].automate(freqency,random_interval,)
       }
       
-    }
-
+    
     break;
     }
   }
 }
 
 void loop() {
-  but.setLogic();
+  but.update();
+  but.debugMsg();
   but.printLogic(MIDI_CH,pitchC3,255,&noteOn);
- 
+ MidiUSB.flush();
 
-  // // reset try counter after button is pushed
+  // reset try counter after button is pushed
   if(!but.getVolantile())handler.IdleIntervalHandler(0,0,0);
-  
   if(result_cm<CHAOS_THRESHOLD_CM)statemaschine(chaotic);
+  
+  if(but.getLong())display.showNumberDec(9999);
   else if(but.getLogic())statemaschine(running);
   else statemaschine(standby);
   

@@ -9,14 +9,14 @@
 #define BLUE_PIN 5
 #define BUTTON_LED_PIN 10
 #define TRIG_PIN 11
-#define ECHO_PIN 3
-//__ #define CLK 
-//__ #define DIO 
+#define ECHO_PIN 12
+#define CLK 2
+#define DIO 3
 
 //Sonar config
-#define MAX_DIST 500
+#define MAX_DIST 70
 #define PING_INTERVAL 50
-#define CHAOS_THRESHOLD_CM 100
+#define CHAOS_THRESHOLD_CM 10
 
 // MIDI Config
 #define MIDI_CH 0
@@ -25,6 +25,9 @@
 
 // PLug config
 #define DEFAULT_DELAY 2400
+
+//Button Config
+#define LONG_PRESS_T 500
 
 
 #endif

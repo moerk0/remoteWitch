@@ -1,39 +1,63 @@
 #include <Arduino.h>
 #include <Button.h>
 
-Button::Button(uint8_t but_pin,uint8_t but_address, uint16_t debounce_time)
+Button::Button(uint8_t but_pin,uint8_t but_address, uint16_t longTime)
     :   pin(but_pin)
     ,   address(but_address)
-    ,   debounceT(debounce_time)
-    ,   state(true)
+    ,   debounceT(BUTTON_DEBOUNCE)
+    ,   longPressTime(longTime)
     ,   gate(true)
     ,   gate_print(true)
+    ,   max_cnt(10)
     {
         pinMode(pin, INPUT_PULLUP);
     }
 
-void Button::setLogic(){
- if (millis() - this->lastDebounce > this->debounceT){ //Debounce Timer
-  this->state = digitalRead(this->pin);
-
-    if (this->state == LOW && this->state_prev == HIGH){ //Button pushed
-        if (this->gate) //Magic conversion gate and logic state. 01 - 10
-      {
-        this->state_logic = HIGH;
-      }
-
-      else{
-        this->state_logic = LOW;
-      }
-
-      this->gate = !this->gate;
-    }
-
-    this->state_prev = this->state;
-    this->lastDebounce = millis();     
- }
+void Button::debugMsg(){
+    Serial.print("Volantile: ");
+  Serial.print(getVolantile());
+    Serial.print(" | Prev: ");
+  Serial.print(this->state_long_prev);
+  Serial.print(" | Logic: ");
+  Serial.print(getLogic());
+  Serial.print(" | Long: ");
+  Serial.print(getLong());
+  Serial.println();
 }
 
+void Button::update(){
+    if (millis() - this->lastDebounce > this->debounceT){ //Debounce Timer
+        this->state = digitalRead(this->pin);
+        
+        if (!this->state && this->state_prev){ //Button pushed
+            this->beginPressTimer = millis(); //start long press Timer
+        }
+        else if (!this->state && !this->state_prev){ //Check if the button is still pressed
+            if( millis()-beginPressTimer > longPressTime){ // Check if it has been pushed for long enough
+                if(this->gate_long)this->state_long = !this->state_long; //Change state
+                this->gate_long = false;                                // prevent oscillation
+            }
+        }
+        else if(this->state && !state_prev){ //button released
+            if(this->gate_long)setLogic(); //check if long button has been toggled, if so don't set logic
+            this->gate_long = true;         //open gate to toggle long press
+        }
+        
+
+
+        this->state_prev = this->state;
+        this->lastDebounce = millis();     
+    }
+    
+}
+
+
+void Button::setLogic(){
+(this->gate)?this->state_logic = HIGH:this->state_logic = LOW; //set logic state
+            this->gate = !this->gate;
+}
+
+//Deprected
 void Button::setVolantile(){
     if (millis() - this->lastDebounce > this->debounceT){
         this->state = digitalRead(this->pin);
@@ -46,7 +70,6 @@ void Button::setVolantile(){
         this->gate = !this->gate;
     }
 }
-
 
 
 void Button::printLogic(byte a, byte b, byte c,void(*func)(byte,byte,byte)){

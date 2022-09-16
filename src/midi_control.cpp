@@ -111,3 +111,9 @@ void MIDIControl::sendControlChange(byte v){
     resetTimer();
     END_OF_TIMER
 }
+
+void MIDIControl::noteOn(byte channel, byte pitch, byte velocity) {
+  midiEventPacket_t noteOn = {0x09, 0x90 | channel, pitch, velocity};
+  MidiUSB.sendMIDI(noteOn);
+  MidiUSB.flush();
+}

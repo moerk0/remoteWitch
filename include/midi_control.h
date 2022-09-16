@@ -47,6 +47,7 @@ public:
     void setInterval(uint16_t t){_interval = t;}
     void automate();
     void automate(byte mode, uint16_t t);
+    void noteOn(byte channel, byte pitch, byte velocity);
 };
 
 #endif
