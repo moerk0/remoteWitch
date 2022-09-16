@@ -22,7 +22,8 @@ public:
     void automate(byte,byte,uint16_t);
     void automate(byte,byte,uint16_t,byte,byte);
     void printName(byte);
-    void sinus(byte cc,byte rev){_param[cc].setReverse(rev);}
+    //Mask function. You call it in a for loop and u set odd/even numbers to reverse
+    void sinus(byte cc){_param[cc].setReverse(reverse);}
 
     byte getOccupiedCC(){return sizeof(_param);}
 };
@@ -47,15 +48,15 @@ void Filter::change(byte which, byte val){
 }
 
 void Filter::automate(byte which){
-    _param[which].run();
+    _param[which].automate();
 }
 
 void Filter::automate(byte which, byte mode, uint16_t interval){
-    _param[which].run(mode,interval);
+    _param[which].automate(mode,interval);
 }
 void Filter::automate(byte which, byte mode, uint16_t interval, byte min, byte max){
     _param[which].setRange(min,max);
-    _param[which].run(mode,interval);
+    _param[which].automate(mode,interval);
 }
 void Filter::printName(byte which){
     switch (which)

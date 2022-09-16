@@ -35,7 +35,12 @@ enum Buttons{
   but0
 };
 
-
+// const uint8_t SEG_CAOS[] = {
+// 	SEG_A | SEG_F | SEG_E | SEG_D ,                    // C
+// 	SEG_E | SEG_F | SEG_G | SEG_A | SEG_B | SEG_C ,   // A
+// 	SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F,   // O
+// 	SEG_A | SEG_F | SEG_G | SEG_C | SEG_D,          // S
+// 	};
 
 
 

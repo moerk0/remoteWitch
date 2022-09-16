@@ -63,7 +63,7 @@ void MIDIControl::setRange(byte min, byte max){
     _range[1] = (max<=127)?max: 127;
 }
 
-void MIDIControl::run(){
+void MIDIControl::automate(){
     if (millis()- _lastChange > _interval){
         controlChange();
         debugMsg();
@@ -78,7 +78,7 @@ void MIDIControl::run(){
 @param modes can be either random change or fixed change
 @param if random t is max Interval, if not t is fixed value
 */
-void MIDIControl::run(byte mode, uint16_t t){
+void MIDIControl::automate(byte mode, uint16_t t){
     if (millis()- _lastChange > _interval){
     switch (mode)
     {

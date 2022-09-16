@@ -51,10 +51,6 @@ void Light::fade(){
     
 }
 
-void Light::writeOutput(){
-    analogWrite(_pin, _fade_val);
-}
-
 void Light::setFadeOptions(uint8_t steps, uint16_t interval){
     _fade_steps = steps;
     _fade_interval = interval;

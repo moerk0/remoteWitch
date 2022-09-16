@@ -16,7 +16,6 @@ private:
     bool _descending;
 
     void calcNextStep();
-    void writeOutput();
     
     void startTimer(uint16_t);
     bool checkTimer();

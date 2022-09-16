@@ -1,6 +1,7 @@
 #ifndef CONFIG_H 
 #define CONFIG_H
 
+//Pin Config
 #define RC_PIN 13
 #define BUTTON_PIN 7
 #define RED_PIN 6
@@ -9,13 +10,20 @@
 #define BUTTON_LED_PIN 10
 #define TRIG_PIN 11
 #define ECHO_PIN 3
+//__ #define CLK 
+//__ #define DIO 
 
+//Sonar config
 #define MAX_DIST 500
 #define PING_INTERVAL 50
+#define CHAOS_THRESHOLD_CM 100
 
+// MIDI Config
 #define MIDI_CH 0
-#define NUM_FILTER 3
+#define N_BPF 3
+#define CC_FIRST 10
 
+// PLug config
 #define DEFAULT_DELAY 2400
 
 

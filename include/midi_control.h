@@ -45,8 +45,8 @@ public:
     
     void sendControlChange(byte val);
     void setInterval(uint16_t t){_interval = t;}
-    void run();
-    void run(byte mode, uint16_t t);
+    void automate();
+    void automate(byte mode, uint16_t t);
 };
 
 #endif
