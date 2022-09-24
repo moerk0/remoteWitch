@@ -24,6 +24,7 @@ public:
     void printName(byte);
     //Mask function. You call it in a for loop and u set odd/even numbers to reverse
     void sinus(byte cc){_param[cc].setReverse(reverse);}
+    void setRange(byte cc, byte min, byte max){_param[cc].setRange(min,max);}
 
     byte getOccupiedCC(){return sizeof(_param);}
 };

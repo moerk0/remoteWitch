@@ -10,6 +10,7 @@ ChasePLUGS::ChasePLUGS(int numPlugs, unsigned long advanceTime)
     , _currentIndex(0)
     , _defaultTime(advanceTime)
     , _lastChange(0)
+    , _tries(0)
     {
         _advanceTime = _defaultTime;
     }
@@ -25,11 +26,11 @@ int ChasePLUGS::getNextPlug(byte mode){
             break;
 
             case randomIndexChase:
-            _prevIndex = _currentIndex;
             _currentIndex = random(0,_numPlugs);
             break;
 
         }
+        _prevIndex = _currentIndex;
         _lastChange = millis();
         return _currentIndex;
     }
@@ -57,14 +58,14 @@ int ChasePLUGS::getNextPlug(byte mode){
  }
 
 void ChasePLUGS::IdleIntervalHandler(int firstT, int secondT, int changeAfterNTries){
-    static int tries;
-    if(firstT == 0){
-        tries = 0;
-    }
-    else{
-        if(tries <= changeAfterNTries)this->_advanceTime = firstT;
+    
+   
+        if(_tries <= changeAfterNTries){
+            this->_advanceTime = firstT;
+            _tries++;
+        }
         else this->_advanceTime = secondT;
-    tries++;
+    Serial.println(_tries);
     }
 
- }
+ 

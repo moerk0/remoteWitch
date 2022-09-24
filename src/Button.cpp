@@ -1,14 +1,14 @@
 #include <Arduino.h>
 #include <Button.h>
 
-Button::Button(uint8_t but_pin,uint8_t but_address, uint16_t longTime)
+Button::Button(uint8_t but_pin,uint8_t but_address, uint16_t longTime, uint8_t max_increment)
     :   pin(but_pin)
     ,   address(but_address)
     ,   debounceT(BUTTON_DEBOUNCE)
     ,   longPressTime(longTime)
-    ,   gate(true)
+    ,   gate_logic(true)
     ,   gate_print(true)
-    ,   max_cnt(10)
+    ,   max_cnt(max_increment)
     {
         pinMode(pin, INPUT_PULLUP);
     }
@@ -16,11 +16,11 @@ Button::Button(uint8_t but_pin,uint8_t but_address, uint16_t longTime)
 void Button::debugMsg(){
     Serial.print("Volantile: ");
   Serial.print(getVolantile());
-    Serial.print(" | Prev: ");
-  Serial.print(this->state_long_prev);
   Serial.print(" | Logic: ");
   Serial.print(getLogic());
   Serial.print(" | Long: ");
+  Serial.print(getLong());
+  Serial.print(" | Increment: ");
   Serial.print(getLong());
   Serial.println();
 }
@@ -31,6 +31,8 @@ void Button::update(){
         
         if (!this->state && this->state_prev){ //Button pushed
             this->beginPressTimer = millis(); //start long press Timer
+            increment();
+            
         }
         else if (!this->state && !this->state_prev){ //Check if the button is still pressed
             if( millis()-beginPressTimer > longPressTime){ // Check if it has been pushed for long enough
@@ -41,6 +43,7 @@ void Button::update(){
         else if(this->state && !state_prev){ //button released
             if(this->gate_long)setLogic(); //check if long button has been toggled, if so don't set logic
             this->gate_long = true;         //open gate to toggle long press
+            // this->gate =true;
         }
         
 
@@ -51,10 +54,14 @@ void Button::update(){
     
 }
 
+void Button::increment(){
+    (cnt < max_cnt)?cnt++:cnt=0;
+    }
+    
 
 void Button::setLogic(){
-(this->gate)?this->state_logic = HIGH:this->state_logic = LOW; //set logic state
-            this->gate = !this->gate;
+(this->gate_logic)?this->state_logic = HIGH:this->state_logic = LOW; //set logic state
+            this->gate_logic = !this->gate_logic;
 }
 
 //Deprected
@@ -67,7 +74,7 @@ void Button::setVolantile(){
 
     if (this->state_logic){ // deactivate effect in case it was active when layer switched
         this->state_logic = !this->state_logic;
-        this->gate = !this->gate;
+        this->gate_logic = !this->gate_logic;
     }
 }
 

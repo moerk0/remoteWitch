@@ -17,16 +17,15 @@ enum Mode{
  public:
    ChasePLUGS(int numPlugs, unsigned long advanceTime);
 
-    int getNextPlug(byte mode);
-    int getPrevIndex(){return _prevIndex;}
-
-    void IdleIntervalHandler(int firstT, int secondT, int changeAfterNTries);
-    unsigned long advanceTime() { return _advanceTime; }
-    void setAdvanceTime(unsigned long advanceTime) { _advanceTime = advanceTime; }
-    void setSnake(int seqLeng){ snake = seqLeng ; }
-    uint8_t previousPlug(int n);
-    //void setAdvanceTime(int t){_advanceTime = t;}
-         
+   int getNextPlug(byte mode);
+   int getPrevIndex(){return _prevIndex;}
+   int getCurrentIndex(){return _currentIndex;}
+   void resetIntervalHandler(){_tries = 0;}
+   void IdleIntervalHandler(int firstT, int secondT, int changeAfterNTries);
+   unsigned long advanceTime() { return _advanceTime; }
+   void setAdvanceTime(unsigned long advanceTime) { _advanceTime = advanceTime; }
+   void setSnake(int seqLeng){ snake = seqLeng ; }
+   uint8_t previousPlug(int n);
  
  private:
     int _numPlugs;
@@ -37,6 +36,7 @@ enum Mode{
     unsigned int _prevIndex;
     unsigned long _advanceTime;
     uint8_t _mode;
+    uint8_t _tries;
     int snake;
  };
  

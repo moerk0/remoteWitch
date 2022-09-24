@@ -14,14 +14,14 @@
 #include "filter.h"
 #include "helper.h"
 
-
+struct FSM fsm;
   TM1637Display display(CLK, DIO);
 Button but(BUTTON_PIN,but0,LONG_PRESS_T);
-RGB_LED rgb(RED_PIN, GREEN_PIN,BLUE_PIN);
-ChasePLUGS handler(cnt_plug,DEFAULT_DELAY);
+// RGB_LED rgb(RED_PIN, GREEN_PIN,BLUE_PIN);
+ChasePLUGS handler(N_PLUGS,DEFAULT_DELAY);
 NewPing sonar(TRIG_PIN,ECHO_PIN,MAX_DIST);uint16_t result_cm;
 Light licht(BUTTON_LED_PIN);
-RCSwitch rc[] = {
+RCSwitch rc[N_PLUGS] = {
   RCSwitch(RC_PIN,ADDR_1,TASTE_A),RCSwitch(RC_PIN,ADDR_1,TASTE_B),
   RCSwitch(RC_PIN,ADDR_2,TASTE_A),RCSwitch(RC_PIN,ADDR_2,TASTE_B),
   RCSwitch(RC_PIN,ADDR_3,TASTE_A),RCSwitch(RC_PIN,ADDR_3,TASTE_B),
@@ -33,13 +33,21 @@ CC_X+1 = gain
 CC X+2 = bandwith
 CC_Y =Freq
 */
-Filter lpf(CC_FIRST);
-Filter bpf[N_BPF]= {Filter(CC_FIRST+3),Filter(CC_FIRST+6),Filter(CC_FIRST+9)};
-
+Filter lpf( FIRST_CC);
+Filter bpf[N_BPF]= {Filter( FIRST_CC+3),Filter( FIRST_CC+6),Filter( FIRST_CC+9)};
+void plugCountError(){
+  while (1)
+      {
+        display.showNumberDec(0,true);
+        delay(100);
+        display.clear();
+        delay(100);
+      }
+}
 
 void setup() {
   Serial.begin(115200);
-  rgb.setFunction(Fade);
+  // rgb.setFunction(Fade);
 
     display.setBrightness(0x0f);
     display.clear();
@@ -54,6 +62,7 @@ lpf.change(freqency,20);
     // bpf[i].normalize(gain);         // all values easy
     
   }
+  fsm.state = standby;
 }
 
 
@@ -78,17 +87,18 @@ void checkSonar(){
 
 
 
-void plugTask(uint8_t state){
-  
+bool plugTask(uint8_t state){
   switch (state)
   {
     case default_off:
     {
       int nextPlug = handler.getNextPlug(chase);
       if (nextPlug>=0){
-          handler.IdleIntervalHandler(500,5000,5*cnt_plug); // sends (5*cntplug) times with 500ms distance, then 5000k
           rc[nextPlug].switchOFF();
+          handler.IdleIntervalHandler(1000,5000,10);
       }
+      if (nextPlug>=N_PLUGS-1) return true;
+      else return false;
     break;
     }
 
@@ -96,9 +106,11 @@ void plugTask(uint8_t state){
     {
       int nextPlug = handler.getNextPlug(chase);
       if (nextPlug>=0){
-        handler.IdleIntervalHandler(1000,10000,5*cnt_plug);
         rc[nextPlug].switchON();
+        handler.IdleIntervalHandler(500,5000, 5*N_PLUGS);
         }
+      if (nextPlug>=N_PLUGS-1) return true;
+      else return false;
     break;
     }
   
@@ -107,12 +119,13 @@ void plugTask(uint8_t state){
       int nextPlug = handler.getNextPlug(randomIndexChase);
 
       if(nextPlug>=0){
-        handler.setAdvanceTime(random(100,2500));
+        handler.setAdvanceTime(random(500,2500));
         rc[nextPlug].switchON();
         delay(1);
         int prev_p = handler.previousPlug(1);
         rc[prev_p].switchOFF();
       }
+      return false;
     break;
     }
   }
@@ -120,35 +133,34 @@ void plugTask(uint8_t state){
 
 bool doonce = false;
 
-void statemaschine(byte fsm_state){
-  switch (fsm_state)
+void statemaschine(FSM *p){
+  switch (p->state)
   {
   case standby:
   {
     plugTask(default_off);
-    display.setSegments(SEG_Stnd);
-    rgb.setFunction(Fade);
-    rgb.run();
+    // rgb.run();
     licht.fade();
+    p->completed[running] = false;
+    p->completed[chaos] = false;
     
     break;
   }
   case running:
   {
-    licht.off();
-
-    // plugTask(default_on);
+    plugTask(default_on);
     checkSonar();
+     p->completed[standby] = false;
+    p->completed[chaos] = false;
+   
     break;
   }
   case chaotic:
   {
-    randomSeed(analogRead(A0));
     display.setSegments(SEG_CAOS); 
-    // while (millis()-kaos < t)
     
-      licht.blink(random(10,1000));
-      // plugTask(chaotic);
+      licht.blink(1);
+      plugTask(chaotic);
       checkSonar();
 
       for (int i = 0; i < N_BPF; i++)
@@ -158,24 +170,72 @@ void statemaschine(byte fsm_state){
       }
       
     
+     p->completed[standby] = false;
+    p->completed[running] = false;
     break;
     }
+    case cnt_states:
+    break;
   }
+  // for(byte i = 0; i<cnt_states;i++){
+  //   if (i != p->state)
+  //   {
+  //     p->completed[i] = false;
+  //   }
+    
+  // }
+}
+
+void trans2stnd(struct FSM *p){
+  if(!p->completed[standby]){
+    p->state = cnt_states;
+    display.setSegments(SEG_Stnd);
+    // rgb.setFunction(Fade);
+    handler.resetIntervalHandler();
+    handler.IdleIntervalHandler(500,5000, 5*N_PLUGS);
+    noteOn(MIDI_CH,pitchC3,255);
+    MidiUSB.flush();
+
+    p->completed[standby] = true;
+  }
+  else p->state = standby;
+}
+
+void trans2run(struct FSM *p){
+  if(p->completed[running] == false){
+    p->state = cnt_states;
+    display.setSegments(SEG_run); 
+    noteOn(MIDI_CH,pitchC3,255);
+    noteOn(MIDI_CH,pitchD3,255);
+    MidiUSB.flush();
+    handler.resetIntervalHandler();
+    licht.off();
+
+    p->completed[running] = true;
+  }
+  else p->state = running;
+    
+}
+
+void trans2chaos(struct FSM *p){
+  if(!p->completed[chaos]){
+    p->state = cnt_states;
+    display.setSegments(SEG_CAOS); 
+    randomSeed(analogRead(A0));
+    noteOn(MIDI_CH,pitchC3,255);
+    noteOn(MIDI_CH,pitchD3,255);
+    MidiUSB.flush();
+    p->completed[chaos] = true;
+  }
+  else p->state = chaos;
 }
 
 void loop() {
   but.update();
-  but.debugMsg();
-  but.printLogic(MIDI_CH,pitchC3,255,&noteOn);
- MidiUSB.flush();
-
-  // reset try counter after button is pushed
-  if(!but.getVolantile())handler.IdleIntervalHandler(0,0,0);
-  if(result_cm<CHAOS_THRESHOLD_CM)statemaschine(chaotic);
   
-  if(but.getLong())display.showNumberDec(9999);
-  else if(but.getLogic())statemaschine(running);
-  else statemaschine(standby);
+  if(but.getLogic())(result_cm<CHAOS_THRESHOLD_CM)?trans2chaos(&fsm):trans2run(&fsm);
+  else trans2stnd(&fsm);
+  statemaschine(&fsm);
   
 }
 
