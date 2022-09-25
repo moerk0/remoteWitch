@@ -152,32 +152,6 @@ void plugTask(uint8_t state){
   }
 }
 
-void beginKaosTimer(){
-  if(!fsm.timer_running){
-    fsm.kaosT = millis();
-    fsm.timer_running^= 1;
-  }
-}
-void printKaosCountdown(){
-  int countdonw = CHAOS_THRESHOLD_MS + fsm.kaosT - millis();
-  Serial.print("Time to change: ");
-  Serial.println(countdonw);
-}
-bool checkKaosTimer(){
-  if(millis()- fsm.kaosT > CHAOS_THRESHOLD_MS){
-    return 1;
-  }
-  if(fsm.timer_running){
-    #if CHAOS_TIMER_MSG ==true
-      printKaosCountdown();
-    #endif
-    
-  }
-  return 0;
-}
-void resetKaosTimer(){
-  if(fsm.timer_running)fsm.timer_running = !fsm.timer_running;
-}
 
 void trans2run(){
   display.setSegments(SEG_run); 
@@ -240,16 +214,16 @@ void statemaschine(FSM *p){
 }
 
 void transit2(byte to_state,FSM *p){
-  if(to_state == running)resetKaosTimer();
+  if(to_state == running)resetKaosTimer(&fsm);
 
   if(p->state != to_state){
     if(p->state == standby && to_state == running) trans2run();
     else if((p->state ==running || p->state==chaos) && to_state == standby) trans2stnd();
     
     else if(p->state == running && to_state == chaos){
-      beginKaosTimer();
+      beginKaosTimer(&fsm);
       
-      if(checkKaosTimer()) trans2chaos();
+      if(checkKaosTimer(&fsm)) trans2chaos();
       else return;
     }
 

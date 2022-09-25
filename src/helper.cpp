@@ -34,3 +34,31 @@ void sonarMsg(uint16_t val){
   Serial.println();
   
 }
+
+
+void beginKaosTimer(FSM *p){
+  if(!p->timer_running){
+    p->kaosT = millis();
+    p->timer_running^= 1;
+  }
+}
+void printKaosCountdown(FSM *p){
+  int countdonw = CHAOS_THRESHOLD_MS + p->kaosT - millis();
+  Serial.print("Time to change: ");
+  Serial.println(countdonw);
+}
+bool checkKaosTimer(FSM *p){
+  if(millis()- p->kaosT > CHAOS_THRESHOLD_MS){
+    return 1;
+  }
+  if(p->timer_running){
+    #if CHAOS_TIMER_MSG ==true
+      printKaosCountdown();
+    #endif
+    
+  }
+  return 0;
+}
+void resetKaosTimer(FSM *p){
+  if(p->timer_running)p->timer_running = !p->timer_running;
+}
