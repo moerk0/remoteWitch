@@ -91,37 +91,24 @@ void RCSwitch::transmitPhrase(){
 }
 
 void RCSwitch::send2Monitor(){
-
-    // for (int i = 0; i < PHRASE_LENGHT; i++){
-
-    //     Serial.print(this->phrase[i]);
-        
-    //     if ( i%2 == 0 )
-    //         Serial.print(" ");
-        
-    //     if ( i%10== 0 )
-    //         Serial.print('\t');
-    
-    // }
     Serial.print("Plug: ");
     Serial.print(this->address);
     Serial.print("/");
     Serial.print(this->taste);
     Serial.print(" is now: ");
-    Serial.println(this->state);
+    Serial.print(this->state);
+    Serial.println();
 }
 
 void RCSwitch::switchON(){
     this->state = true;
     collectPhrase();
     transmitPhrase();
-    send2Monitor();
 }
 void RCSwitch::switchOFF(){
     this->state = false;
     collectPhrase();
     transmitPhrase();
-    send2Monitor();
 }
 
 void RCSwitch::switchChange(){

@@ -106,7 +106,9 @@ void MIDIControl::sendControlChange(byte v){
     if (millis()- _lastChange > _interval){
     _cc_val = v;
     controlChange();
-    debugMsg();
+    #if MIDI_MSG == true
+        debugMsg();
+    #endif
     MidiUSB.flush();
     resetTimer();
     END_OF_TIMER

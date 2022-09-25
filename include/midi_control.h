@@ -2,6 +2,7 @@
 #define MIDI_HELPER
 #include <Arduino.h>
 #include <MIDIUSB.h>
+#include "config.h"
 
 #define MAX_CC_VAL 127
 

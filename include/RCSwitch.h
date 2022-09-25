@@ -73,13 +73,13 @@ class RCSwitch
 
         void collectPhrase();
         void transmitPhrase();
-        void send2Monitor();
 
 
     public:
         RCSwitch(uint8_t, uint8_t,uint8_t);
 
 
+        void send2Monitor();
         void switchON();
         void switchOFF();
         void switchChange();

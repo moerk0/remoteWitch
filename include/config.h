@@ -34,5 +34,9 @@
 //Button Config
 #define LONG_PRESS_T 500
 
+//Debug Messages
+#define PLUG_MSG        true
+#define MIDI_MSG        false
+#define CHAOS_TIMER_MSG false
 
 #endif

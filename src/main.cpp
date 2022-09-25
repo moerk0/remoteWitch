@@ -84,7 +84,7 @@ void sonarTask() { // Timer2 interrupt calls this function every 24uS where you 
   if (sonar.check_timer()) { // This is how you check to see if the ping was received.
     // Here's where you can add code.
     result_cm = sonar.convert_cm(sonar.ping_result);
-    sonarMsg(result_cm);
+    // sonarMsg(result_cm);
     lpf.change(freqency, mapSonarVal(result_cm));
     display.showNumberDec(result_cm);
 
@@ -110,6 +110,9 @@ void plugTask(uint8_t state){
       if (nextPlug>=0){
           rc[nextPlug].switchOFF();
           handler.IdleIntervalHandler(1000,5000,5*N_PLUGS);
+          #if PLUG_MSG == true
+            rc[nextPlug].send2Monitor();
+          #endif
       }
       
     break;
@@ -121,6 +124,9 @@ void plugTask(uint8_t state){
       if (nextPlug>=0){
         rc[nextPlug].switchON();
         handler.IdleIntervalHandler(500,5000, 5*N_PLUGS);
+        #if PLUG_MSG == true
+            rc[nextPlug].send2Monitor();
+        #endif
         }
     break;
     }
@@ -135,6 +141,11 @@ void plugTask(uint8_t state){
         delay(1);
         int prev_p = handler.previousPlug(1);
         rc[prev_p].switchOFF();
+
+        #if PLUG_MSG == true
+          rc[nextPlug].send2Monitor();
+          rc[prev_p].send2Monitor();
+        #endif
       }
     break;
     }
@@ -147,9 +158,20 @@ void beginKaosTimer(){
     fsm.timer_running^= 1;
   }
 }
+void printKaosCountdown(){
+  int countdonw = CHAOS_THRESHOLD_MS + fsm.kaosT - millis();
+  Serial.print("Time to change: ");
+  Serial.println(countdonw);
+}
 bool checkKaosTimer(){
   if(millis()- fsm.kaosT > CHAOS_THRESHOLD_MS){
     return 1;
+  }
+  if(fsm.timer_running){
+    #if CHAOS_TIMER_MSG ==true
+      printKaosCountdown();
+    #endif
+    
   }
   return 0;
 }
@@ -182,8 +204,8 @@ void trans2stnd(){
     
 }
 
-void statemaschine(byte state){
-  switch (state)
+void statemaschine(FSM *p){
+  switch (p->state)
   {
   case standby:
   
@@ -234,57 +256,6 @@ void transit2(byte to_state,FSM *p){
     p->state_prev = p->state;
     p->state = to_state;
   }
-  else statemaschine(p->state);
-}
-
-
-void trans2stnd(struct FSM *p){
-  if(!p->completed[standby]){
-    p->state = cnt_states;
-    display.setSegments(SEG_Stnd);
-    // rgb.setFunction(Fade);
-    handler.resetIntervalHandler();
-    noteOn(MIDI_CH,pitchC3,255);
-    MidiUSB.flush();
-
-    p->completed[standby] = true;
-  }
-  else p->state = standby;
-}
-
-void trans2run(struct FSM *p){
-  if(p->completed[running] == false){
-    p->state = cnt_states;
-    display.setSegments(SEG_run); 
-    noteOn(MIDI_CH,pitchC3,255);
-    noteOn(MIDI_CH,pitchD3,255);
-    MidiUSB.flush();
-    handler.resetIntervalHandler();
-    licht.off();
-
-    p->completed[running] = true;
-  }
-  else p->state = running;
-    
-}
-
-void trans2chaos(struct FSM *p){
-  static uint64_t t;
-  if(!t){
-    t = millis();
-  }
-
-
-  if(!p->completed[chaos]){
-    p->state = cnt_states;
-    display.setSegments(SEG_CAOS); 
-    randomSeed(analogRead(A0));
-    noteOn(MIDI_CH,pitchC3,255);
-    noteOn(MIDI_CH,pitchD3,255);
-    MidiUSB.flush();
-    p->completed[chaos] = true;
-  }
-  else p->state = chaos;
 }
 
 void loop() {
@@ -292,5 +263,6 @@ void loop() {
   
   if(but.getLogic())(result_cm<CHAOS_THRESHOLD_CM)?transit2(chaos,&fsm):transit2(running,&fsm);
   else transit2(standby,&fsm);
+  statemaschine(&fsm);
 }
 

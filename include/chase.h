@@ -3,6 +3,7 @@
  #define CHASE_H
  
  #include <Arduino.h>
+ #include "config.h"
 
 
 enum Mode{
@@ -17,6 +18,7 @@ enum Mode{
  public:
    ChasePLUGS(int numPlugs, unsigned long advanceTime);
 
+    void debugMsg();
    int getNextPlug(byte mode);
    int getPrevIndex(){return _prevIndex;}
    int getCurrentIndex(){return _currentIndex;}

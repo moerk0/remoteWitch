@@ -65,7 +65,12 @@ void ChasePLUGS::IdleIntervalHandler(int firstT, int secondT, int changeAfterNTr
             _tries++;
         }
         else this->_advanceTime = secondT;
-    Serial.println(_tries);
+    #if PLUG_MSG == true
+        Serial.print("Change of intervals in ");
+        Serial.println(changeAfterNTries - _tries);
+    #endif
     }
 
+void ChasePLUGS::debugMsg(){
+}
  
