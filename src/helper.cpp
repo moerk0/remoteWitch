@@ -3,7 +3,9 @@
 void noteOn(byte channel, byte pitch, byte velocity) {
   midiEventPacket_t noteOn = {0x09, 0x90 | channel, pitch, velocity};
   MidiUSB.sendMIDI(noteOn);
+  #if MIDI_MSG ==1
   midiMsg(pitch, velocity);
+  #endif
 }
 
 void noteOff(byte channel, byte pitch, byte velocity) {

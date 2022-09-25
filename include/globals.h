@@ -6,8 +6,8 @@ enum MidiChannels{
   bpf_1,
   bpf_2,
   bpf_3,
-  play_pause,
-  toggle_mute,
+  vol_1,
+  vol_2,
   cc_cnt,
 };
 

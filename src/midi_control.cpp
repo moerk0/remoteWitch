@@ -94,7 +94,9 @@ void MIDIControl::automate(uint8_t mode, uint16_t t){
     }
 
     controlChange();
+    #if MIDI_MSG ==1
     debugMsg();
+    #endif
     MidiUSB.flush();
     setNextVal();
     resetTimer();

@@ -23,10 +23,10 @@ ChasePLUGS handler(N_PLUGS,DEFAULT_DELAY);
 NewPing sonar(TRIG_PIN,ECHO_PIN,MAX_DIST);uint16_t result_cm;
 Light licht(BUTTON_LED_PIN);
 RCSwitch rc[N_PLUGS] = {
-  RCSwitch(RC_PIN,ADDR_1,TASTE_A),
+  // RCSwitch(RC_PIN,ADDR_1,TASTE_A),
   RCSwitch(RC_PIN,ADDR_1,TASTE_B),
   RCSwitch(RC_PIN,ADDR_2,TASTE_A),
-  RCSwitch(RC_PIN,ADDR_2,TASTE_B),
+  // RCSwitch(RC_PIN,ADDR_2,TASTE_B),
   RCSwitch(RC_PIN,ADDR_3,TASTE_A),
   RCSwitch(RC_PIN,ADDR_3,TASTE_B),
   };
@@ -63,6 +63,11 @@ void setup() {
   Serial.begin(115200);
   // rgb.setFunction(Fade);
 
+  for(int i; i<N_PLUGS;i++){
+    rc[i].switchOFF();
+    delay(10);
+  }
+
   display.setBrightness(0x0f);
   display.clear();
   plugerror();
@@ -90,6 +95,7 @@ void sonarTask() { // Timer2 interrupt calls this function every 24uS where you 
     // Here's where you can add code.
     result_cm = sonar.convert_cm(sonar.ping_result);
     // sonarMsg(result_cm);
+   
     midiCC[hpf].sendControlChange(mapSonarVal(result_cm));
     display.showNumberDec(result_cm);
 
@@ -97,10 +103,10 @@ void sonarTask() { // Timer2 interrupt calls this function every 24uS where you 
 
 
 }
-void checkSonar(NewPing *p){
-   if (millis() >= p->pingTimer) {   // pingSpeed milliseconds since last ping, do another ping.
-    p->pingTimer += PING_INTERVAL;      // Set the next ping time.
-    p->ping_timer(sonarTask); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
+void checkSonar(){
+   if (millis() >= sonar.pingTimer) {   // pingSpeed milliseconds since last ping, do another ping.
+    sonar.pingTimer += PING_INTERVAL;      // Set the next ping time.
+    sonar.ping_timer(sonarTask); // Send out the ping, calls "echoCheck" function every 24uS where you can check the ping status.
   }
 }
 
@@ -114,7 +120,7 @@ void plugTask(uint8_t state){
       int nextPlug = handler.getNextPlug(chase);
       if (nextPlug>=0){
           rc[nextPlug].switchOFF();
-          handler.IdleIntervalHandler(1000,5000,5*N_PLUGS);
+          handler.IdleIntervalHandler(1000,5000,2*N_PLUGS);
           #if PLUG_MSG == true
             rc[nextPlug].send2Monitor();
           #endif
@@ -128,9 +134,9 @@ void plugTask(uint8_t state){
       int nextPlug = handler.getNextPlug(chase);
       if (nextPlug>=0){
         rc[nextPlug].switchON();
-        handler.IdleIntervalHandler(500,5000, 5*N_PLUGS);
+        handler.IdleIntervalHandler(500,5000, 2*N_PLUGS);
         #if PLUG_MSG == true
-            rc[nextPlug].send2Monitor();
+          rc[nextPlug].send2Monitor();
         #endif
         }
     break;
@@ -141,7 +147,7 @@ void plugTask(uint8_t state){
       int nextPlug = handler.getNextPlug(randomIndexChase);
 
       if(nextPlug>=0){
-        handler.setAdvanceTime(random(500,2500));
+        handler.setAdvanceTime(random(1000,2500));
         rc[nextPlug].switchON();
         delay(1);
         int prev_p = handler.previousPlug(1);
@@ -161,7 +167,6 @@ void plugTask(uint8_t state){
 void trans2run(){
   display.setSegments(SEG_run); 
   noteOn(MIDI_CH,pitchC3,255);
-  noteOn(MIDI_CH,pitchD3,255);
   MidiUSB.flush();
   handler.resetIntervalHandler();
   licht.off();
@@ -170,8 +175,6 @@ void trans2run(){
 void trans2chaos(){
   display.setSegments(SEG_CAOS); 
   randomSeed(analogRead(A0));
-  noteOn(MIDI_CH,pitchC3,255);
-  noteOn(MIDI_CH,pitchD3,255);
   MidiUSB.flush();
 }
 
@@ -185,8 +188,8 @@ void transit2(byte to_state,FSM *p){
   if(to_state == running)resetKaosTimer(&fsm);
 
   if(p->state != to_state){
-    if((p->state == standby|| p->state ==praeludium) && to_state == running) trans2run();
-    else if(p->state !=chaos && to_state == standby) trans2stnd();
+    if(to_state == running) trans2run();
+    else if(to_state == standby) trans2stnd();
     
     else if(p->state == running && to_state == chaos){
       beginKaosTimer(&fsm);
@@ -213,13 +216,15 @@ void statemaschine(FSM *p){
     if(but.getIncrement() == 1){
       licht.off();
       if(doonce){
-      rc[0].switchON();
+      rc[2].switchON();
+      noteOn(MIDI_CH,pitchD3,255);
+      MidiUSB.flush();
       doonce = !doonce;
       }
       }
     if(but.getIncrement() == 2){
       if(!doonce){
-      rc[0].switchOFF();
+      rc[2].switchOFF();
       doonce = !doonce;
       }
       licht.fade();}
@@ -237,7 +242,7 @@ void statemaschine(FSM *p){
   case running:
   
     plugTask(default_on);
-    checkSonar(&sonar);   
+    checkSonar();   
     break;
   
   case chaos:
@@ -246,7 +251,7 @@ void statemaschine(FSM *p){
     
       licht.blink(10);
       plugTask(chaotic);
-      checkSonar(&sonar);
+      checkSonar();
 
       for (int i = bpf_1; i <= bpf_3 ; i++){
         midiCC[i].automate(new_interval,10);
@@ -264,26 +269,22 @@ void statemaschine(FSM *p){
 
 
 void loop() {
-  while (fsm.state == praeludium)
-  {
-    but.update();
-    statemaschine(&fsm);
-    Serial.println(fsm.state);
-
-  #if BUTTON_MSG == 1
-    but.debugMsg();
-  #endif
-  }
-  
   but.update();
 
   #if BUTTON_MSG == 1
     but.debugMsg();
   #endif
-  
-  if(but.getLogic())(result_cm<CHAOS_THRESHOLD_CM)?transit2(chaos,&fsm):transit2(running,&fsm);
+  if(fsm.state == praeludium){
+    transit2(praeludium, &fsm);
+    if(!but.getLogic())but.setLogic();
+    }
+  else if(but.getLogic())(result_cm<CHAOS_THRESHOLD_CM)?transit2(chaos,&fsm):transit2(running,&fsm);
   else if(but.getLong())transit2(midi_setup,&fsm);
   else transit2(standby,&fsm);
   statemaschine(&fsm);
+
+  
+
+ 
 }
 

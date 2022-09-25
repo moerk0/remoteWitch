@@ -19,6 +19,8 @@ int ChasePLUGS::getNextPlug(byte mode){
     _mode = mode;
     
     if ((millis() - _lastChange) >= _advanceTime) {
+        _prevIndex = _currentIndex;
+        
         switch (mode){
             case chase:
             _currentIndex++ ;
@@ -30,7 +32,6 @@ int ChasePLUGS::getNextPlug(byte mode){
             break;
 
         }
-        _prevIndex = _currentIndex;
         _lastChange = millis();
         return _currentIndex;
     }
