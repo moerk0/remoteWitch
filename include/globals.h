@@ -23,7 +23,10 @@ enum Buttons{
  struct FSM
 {
   uint8_t state;
+  uint8_t state_prev;
   bool completed[cnt_states];
+  bool timer_running;
+  uint64_t kaosT;
 };
 
 

@@ -16,7 +16,10 @@
 //Sonar config
 #define MAX_DIST 500
 #define PING_INTERVAL 50
+
+//Caos Config
 #define CHAOS_THRESHOLD_CM 50
+#define CHAOS_THRESHOLD_MS 1000
 
 // MIDI Config
 #define MIDI_CH 0
