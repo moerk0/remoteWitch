@@ -13,7 +13,7 @@
 #include "light.h"
 #include "filter.h"
 #include "helper.h"
-
+#include "Segment_names.h"
 struct FSM fsm;
   TM1637Display display(CLK, DIO);
 Button but(BUTTON_PIN,but0,LONG_PRESS_T);
