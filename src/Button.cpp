@@ -21,7 +21,7 @@ void Button::debugMsg(){
   Serial.print(" | Long: ");
   Serial.print(getLong());
   Serial.print(" | Increment: ");
-  Serial.print(getLong());
+  Serial.print(getIncrement());
   Serial.println();
 }
 
@@ -41,7 +41,7 @@ void Button::update(){
             }
         }
         else if(this->state && !state_prev){ //button released
-            if(this->gate_long)setLogic(); //check if long button has been toggled, if so don't set logic
+            if(this->gate_long && !this->state_long)setLogic(); //check if long button has been toggled, if so don't set logic
             this->gate_long = true;         //open gate to toggle long press
             // this->gate =true;
         }

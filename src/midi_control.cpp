@@ -1,7 +1,7 @@
 #include "midi_control.h"
 #define END_OF_TIMER }
 
-MIDIControl::MIDIControl(byte control_ch, uint16_t interval):_control(control_ch),_interval(interval),_ascending(true)
+MIDIControl::MIDIControl(uint8_t control_ch, uint16_t interval):_control(control_ch),_interval(interval),_ascending(true)
 {
     _lastChange = millis();
     _range[0] = 0;
@@ -19,7 +19,7 @@ void MIDIControl::controlChange(){
   MidiUSB.sendMIDI(event);
 }
 
-void MIDIControl::setReverse(byte b){
+void MIDIControl::setReverse(uint8_t b){
     if(b == reverse){
         _ascending = false;
         _cc_val = MAX_CC_VAL;
@@ -58,7 +58,7 @@ void MIDIControl::setNextVal(){
     
 }
 
-void MIDIControl::setRange(byte min, byte max){
+void MIDIControl::setRange(uint8_t min, uint8_t max){
     _range[0] = (min>=0)?min: 0;
     _range[1] = (max<=127)?max: 127;
 }
@@ -78,7 +78,7 @@ void MIDIControl::automate(){
 @param modes can be either random change or fixed change
 @param if random t is max Interval, if not t is fixed value
 */
-void MIDIControl::automate(byte mode, uint16_t t){
+void MIDIControl::automate(uint8_t mode, uint16_t t){
     if (millis()- _lastChange > _interval){
     switch (mode)
     {
@@ -102,7 +102,7 @@ void MIDIControl::automate(byte mode, uint16_t t){
     END_OF_TIMER
 }
 
-void MIDIControl::sendControlChange(byte v){
+void MIDIControl::sendControlChange(uint8_t v){
     if (millis()- _lastChange > _interval){
     _cc_val = v;
     controlChange();
@@ -114,8 +114,13 @@ void MIDIControl::sendControlChange(byte v){
     END_OF_TIMER
 }
 
-void MIDIControl::noteOn(byte channel, byte pitch, byte velocity) {
+void MIDIControl::noteOn(uint8_t channel, uint8_t pitch, uint8_t velocity) {
   midiEventPacket_t noteOn = {0x09, 0x90 | channel, pitch, velocity};
   MidiUSB.sendMIDI(noteOn);
   MidiUSB.flush();
+}
+
+void MIDIControl::setup(){
+    setInterval(100);
+    sendControlChange(MAX_CC_VAL);
 }

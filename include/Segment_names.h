@@ -12,6 +12,7 @@
 
 
 #define LETTER_R SEG_E | SEG_G
+#define LETTER_P SEG_A | SEG_B | SEG_G | SEG_F | SEG_E
 //
 //      A
 //     ---
@@ -20,6 +21,14 @@
 //  E |   | C
 //     ---
 //      D
+const uint8_t SEG_PRAE[]={
+  LETTER_P,LETTER_R,LETTER_A,LETTER_E
+};
+
+const uint8_t SEG_CC[]={
+  LETTER_C,LETTER_C
+};
+
 const uint8_t SEG_ERR[]={
   LETTER_E,LETTER_R,LETTER_R
 };

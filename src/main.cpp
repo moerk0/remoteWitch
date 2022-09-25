@@ -17,7 +17,7 @@
 
 struct FSM fsm;
 TM1637Display display(CLK, DIO);
-Button but(BUTTON_PIN,but0,LONG_PRESS_T);
+Button but(BUTTON_PIN,but0,LONG_PRESS_T,cc_cnt - 1);
 // RGB_LED rgb(RED_PIN, GREEN_PIN,BLUE_PIN);
 ChasePLUGS handler(N_PLUGS,DEFAULT_DELAY);
 NewPing sonar(TRIG_PIN,ECHO_PIN,MAX_DIST);uint16_t result_cm;
@@ -38,7 +38,8 @@ CC X+2 = bandwith
 CC_Y =Freq
 */
 Filter lpf( FIRST_CC);
-Filter bpf[N_BPF]= {Filter( FIRST_CC+3),Filter( FIRST_CC+6),Filter( FIRST_CC+9)};
+// Filter bpf[N_BPF]= {Filter( FIRST_CC+3),Filter( FIRST_CC+6),Filter( FIRST_CC+9)};
+MIDIControl midiCC[cc_cnt];
 
 void plugerror(){
   size_t len = sizeof(rc) / sizeof(rc[0]);
@@ -69,14 +70,18 @@ void setup() {
   sonar.pingTimer = millis(); // Start ping time now.
 
 //setting of Filters. 
-  lpf.change(freqency,20);
-  for(int i = 0; i<N_BPF;i++){
-    if (i%2 == 0)bpf[i].sinus(gain); //set even numbers ascending =false
-    // bpf[i].normalize(gain);         // all values easy
+  for(int i; i<cc_cnt;i++){
+    midiCC[i].setCC( FIRST_CC + i );
   }
 
-  fsm.state = standby;
-  display.setSegments(SEG_Stnd);
+  for(int i = bpf_1; i<=bpf_3;i++){
+    if (i%2 == 0)midiCC[i].setReverse(reverse); //set even numbers ascending =false
+    midiCC[i].sendControlChange(64);         // all values easy
+  }
+
+  midiCC[hpf].sendControlChange(20);
+
+  fsm.state = praeludium;
 }
 
 
@@ -85,7 +90,7 @@ void sonarTask() { // Timer2 interrupt calls this function every 24uS where you 
     // Here's where you can add code.
     result_cm = sonar.convert_cm(sonar.ping_result);
     // sonarMsg(result_cm);
-    lpf.change(freqency, mapSonarVal(result_cm));
+    midiCC[hpf].sendControlChange(mapSonarVal(result_cm));
     display.showNumberDec(result_cm);
 
   }
@@ -175,18 +180,58 @@ void trans2stnd(){
     // rgb.setFunction(Fade);
   handler.resetIntervalHandler();
   noteOn(MIDI_CH,pitchC3,255);
+}
+void transit2(byte to_state,FSM *p){
+  if(to_state == running)resetKaosTimer(&fsm);
+
+  if(p->state != to_state){
+    if((p->state == standby|| p->state ==praeludium) && to_state == running) trans2run();
+    else if(p->state !=chaos && to_state == standby) trans2stnd();
     
+    else if(p->state == running && to_state == chaos){
+      beginKaosTimer(&fsm);
+      
+      if(checkKaosTimer(&fsm)) trans2chaos();
+      else return;
+    }
+    else if(p->state != standby && to_state == midi_setup)return;
+
+    p->state_prev = p->state;
+    p->state = to_state;
+  }
 }
 
+bool doonce =true ;
 void statemaschine(FSM *p){
   switch (p->state)
   {
+  case praeludium:
+    display.setSegments(SEG_PRAE);
+    if(but.getIncrement() == 0){
+      licht.fade();
+      }
+    if(but.getIncrement() == 1){
+      licht.off();
+      if(doonce){
+      rc[0].switchON();
+      doonce = !doonce;
+      }
+      }
+    if(but.getIncrement() == 2){
+      if(!doonce){
+      rc[0].switchOFF();
+      doonce = !doonce;
+      }
+      licht.fade();}
+    if(but.getIncrement() == 3){transit2(running, &fsm);}
+  break;
+
+
   case standby:
   
     plugTask(default_off);
     // rgb.run();
     licht.fade();
-    
     break;
   
   case running:
@@ -203,39 +248,41 @@ void statemaschine(FSM *p){
       plugTask(chaotic);
       checkSonar(&sonar);
 
-      for (int i = 0; i < N_BPF; i++)
-      {
-        bpf[i].automate(gain,new_interval,10);
-        // bpf[i].automate(freqency,random_interval,)
+      for (int i = bpf_1; i <= bpf_3 ; i++){
+        midiCC[i].automate(new_interval,10);
       }
     break;
 
+  case midi_setup:
+  midiCC[but.getIncrement()].setup();
+  display.setSegments(SEG_SETU);
+  break;
+
+
   }
 }
 
-void transit2(byte to_state,FSM *p){
-  if(to_state == running)resetKaosTimer(&fsm);
-
-  if(p->state != to_state){
-    if(p->state == standby && to_state == running) trans2run();
-    else if((p->state ==running || p->state==chaos) && to_state == standby) trans2stnd();
-    
-    else if(p->state == running && to_state == chaos){
-      beginKaosTimer(&fsm);
-      
-      if(checkKaosTimer(&fsm)) trans2chaos();
-      else return;
-    }
-
-    p->state_prev = p->state;
-    p->state = to_state;
-  }
-}
 
 void loop() {
+  while (fsm.state == praeludium)
+  {
+    but.update();
+    statemaschine(&fsm);
+    Serial.println(fsm.state);
+
+  #if BUTTON_MSG == 1
+    but.debugMsg();
+  #endif
+  }
+  
   but.update();
+
+  #if BUTTON_MSG == 1
+    but.debugMsg();
+  #endif
   
   if(but.getLogic())(result_cm<CHAOS_THRESHOLD_CM)?transit2(chaos,&fsm):transit2(running,&fsm);
+  else if(but.getLong())transit2(midi_setup,&fsm);
   else transit2(standby,&fsm);
   statemaschine(&fsm);
 }

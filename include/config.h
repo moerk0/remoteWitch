@@ -25,7 +25,10 @@
 #define MIDI_CH 0
 #define N_BPF 3
 #define N_CC 4
+#define N_NOTES 4
 #define FIRST_CC 10
+#define PLAY_PAUSE 48
+#define TOGGLE_MUTE 49
 
 // PLug config
 #define DEFAULT_DELAY 2400
@@ -35,8 +38,9 @@
 #define LONG_PRESS_T 500
 
 //Debug Messages
-#define PLUG_MSG        true
-#define MIDI_MSG        false
+#define PLUG_MSG        1
+#define MIDI_MSG        0
 #define CHAOS_TIMER_MSG false
+#define BUTTON_MSG      1
 
 #endif

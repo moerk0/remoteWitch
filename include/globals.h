@@ -1,11 +1,22 @@
 #ifndef GLOBALS_H 
 #define GLOBALS_H
 
+enum MidiChannels{
+  hpf,
+  bpf_1,
+  bpf_2,
+  bpf_3,
+  play_pause,
+  toggle_mute,
+  cc_cnt,
+};
+
 enum FSMStates{
+  praeludium,
   standby,
   running,
   chaos,
-  // midi_setup,
+  midi_setup,
   cnt_states,
 };
 

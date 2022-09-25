@@ -24,31 +24,33 @@ enum Elevator{
 class MIDIControl  
 {
 private:
-    byte _control;
+    uint8_t _control;
     uint16_t _interval;
-    byte _range[2];
-    byte _cc_val;
+    uint8_t _range[2];
+    uint8_t _cc_val;
     uint32_t _lastChange;
-    byte _ascending;
+    uint8_t _ascending;
 
     void setNextVal();
-    byte setVal(byte v){(v <= 127)?v = v : v = 127;return v;}
+    uint8_t setVal(uint8_t v){(v <= 127)?v = v : v = 127;return v;}
     void controlChange();
     void debugMsg();
     void resetTimer(){_lastChange = millis();}
 
 public:
-    MIDIControl(byte control_ch, uint16_t interval);
+    MIDIControl(uint8_t control_ch, uint16_t interval);
     MIDIControl(); 
-    void setRange(byte min, byte max);
-    void setCC(byte cc){_control = cc;}
-    void setReverse(byte ascending);
+    void setRange(uint8_t min, uint8_t max);
+    void setCC(uint8_t cc){_control = cc;}
+    void setReverse(uint8_t ascending);
+    uint8_t getCCNum(){return _control;}
     
-    void sendControlChange(byte val);
+    void sendControlChange(uint8_t val);
     void setInterval(uint16_t t){_interval = t;}
     void automate();
-    void automate(byte mode, uint16_t t);
-    void noteOn(byte channel, byte pitch, byte velocity);
+    void automate(uint8_t mode, uint16_t t);
+    void noteOn(uint8_t channel, uint8_t pitch, uint8_t velocity);
+    void setup();
 };
 
 #endif

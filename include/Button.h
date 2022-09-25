@@ -35,23 +35,23 @@ class Button
 
 
     public:
-    Button(uint8_t pin, uint8_t but_address, uint16_t longTime, uint8_t max_increment=10);
+        Button(uint8_t pin, uint8_t but_address, uint16_t longTime, uint8_t max_increment=10);
 
-    void setLogic();
-    void setVolantile();
-    void setLastDebounce();
-    void resetIncrement(){cnt = 0;}
-    void setNewLimit(byte lim){max_cnt = lim;}
-    void update();
+        void setLogic();
+        void setVolantile();
+        void setLastDebounce();
+        void resetIncrement(){cnt = 0;}
+        void setNewLimit(byte lim){max_cnt = lim;}
+        void update();
 
-    bool getLogic(){return state_logic;}
-    bool getVolantile(){return !state;}
-    bool getLong(){return state_long;}
-    uint8_t getIncrement(){return cnt;}
+        bool getLogic(){return state_logic;}
+        bool getVolantile(){return !state;}
+        bool getLong(){return state_long;}
+        uint8_t getIncrement(){return cnt;}
 
-    void debugMsg();
-    void printLogic(byte a, byte b ,byte c,void(*func)(byte,byte,byte));
-    void printVolantile();
+        void debugMsg();
+        void printLogic(byte a, byte b ,byte c,void(*func)(byte,byte,byte));
+        void printVolantile();
 
 };
 
