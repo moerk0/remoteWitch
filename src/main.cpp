@@ -25,8 +25,8 @@ Light licht(BUTTON_LED_PIN);
 RCSwitch rc[N_PLUGS] = {
   // RCSwitch(RC_PIN,ADDR_1,TASTE_A),
   RCSwitch(RC_PIN,ADDR_1,TASTE_B),
-  RCSwitch(RC_PIN,ADDR_2,TASTE_A),
-  // RCSwitch(RC_PIN,ADDR_2,TASTE_B),
+  // RCSwitch(RC_PIN,ADDR_2,TASTE_A),
+  RCSwitch(RC_PIN,ADDR_2,TASTE_B),
   RCSwitch(RC_PIN,ADDR_3,TASTE_A),
   RCSwitch(RC_PIN,ADDR_3,TASTE_B),
   };
