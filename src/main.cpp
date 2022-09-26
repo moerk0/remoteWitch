@@ -182,10 +182,10 @@ void trans2stnd(){
   noteOn(MIDI_CH,pitchC3,255);
 }
 void transit2(byte to_state,FSM *p){
-  if(to_state == running)resetKaosTimer(&fsm);
+  if(to_state == running && p->state != chaos)resetKaosTimer(&fsm);
 
   if(p->state != to_state){
-    if((p->state == standby|| p->state ==praeludium) && to_state == running) trans2run();
+    if((p->state == standby || p->state ==praeludium) && to_state == running) trans2run();
     else if(p->state !=chaos && to_state == standby) trans2stnd();
     
     else if(p->state == running && to_state == chaos){
@@ -193,6 +193,14 @@ void transit2(byte to_state,FSM *p){
       
       if(checkKaosTimer(&fsm)) trans2chaos();
       else return;
+    }
+
+    else if(p->state == chaos && to_state == running){
+      beginKaosTimer(&fsm);
+      
+      if(checkKaosTimer(&fsm)) trans2run();
+      else return;
+
     }
     else if(p->state != standby && to_state == midi_setup)return;
 
@@ -223,7 +231,7 @@ void statemaschine(FSM *p){
       doonce = !doonce;
       }
       licht.fade();}
-    if(but.getIncrement() == 3){transit2(running, &fsm);}
+    if(but.getIncrement() == 3){but.setLogic();}
   break;
 
 
