@@ -2,7 +2,7 @@
 #define BUTTON_H
 #include <Arduino.h>
 
-#define BUTTON_DEBOUNCE 30
+#define BUTTON_DEBOUNCE 300
 
 class Button
 {

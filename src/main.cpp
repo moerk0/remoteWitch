@@ -134,7 +134,7 @@ void plugTask(uint8_t state){
       int nextPlug = handler.getNextPlug(chase);
       if (nextPlug>=0){
         rc[nextPlug].switchON();
-        handler.IdleIntervalHandler(500,5000, 2*N_PLUGS);
+        handler.IdleIntervalHandler(1000,5000, 2*N_PLUGS);
         #if PLUG_MSG == true
           rc[nextPlug].send2Monitor();
         #endif
@@ -166,24 +166,34 @@ void plugTask(uint8_t state){
 
 void trans2run(){
   display.setSegments(SEG_run); 
-  noteOn(MIDI_CH,pitchC3,255);
   MidiUSB.flush();
   handler.resetIntervalHandler();
   licht.off();
+  midiCC[vol_1].sendControlChange(100);
+  midiCC[vol_2].sendControlChange(1);
 }
 
 void trans2chaos(){
   display.setSegments(SEG_CAOS); 
   randomSeed(analogRead(A0));
-  MidiUSB.flush();
+  midiCC[vol_1].sendControlChange(30);
+  midiCC[vol_2].sendControlChange(60);
 }
 
 void trans2stnd(){
   display.setSegments(SEG_Stnd);
+  midiCC[vol_1].sendControlChange(1);
+
     // rgb.setFunction(Fade);
   handler.resetIntervalHandler();
-  noteOn(MIDI_CH,pitchC3,255);
 }
+
+void trans2setup(){
+  display.setSegments(SEG_SETU);
+  delay(100);
+}
+
+
 void transit2(byte to_state,FSM *p){
   if(to_state == running)resetKaosTimer(&fsm);
 
@@ -228,7 +238,7 @@ void statemaschine(FSM *p){
       doonce = !doonce;
       }
       licht.fade();}
-    if(but.getIncrement() == 3){transit2(running, &fsm);}
+    if(but.getIncrement() == 3){but.setLogic();}
   break;
 
 
@@ -260,10 +270,8 @@ void statemaschine(FSM *p){
 
   case midi_setup:
   midiCC[but.getIncrement()].setup();
-  display.setSegments(SEG_SETU);
+  display.showNumberDec(midiCC[but.getIncrement()].getCCNum());
   break;
-
-
   }
 }
 
@@ -276,15 +284,9 @@ void loop() {
   #endif
   if(fsm.state == praeludium){
     transit2(praeludium, &fsm);
-    if(!but.getLogic())but.setLogic();
     }
   else if(but.getLogic())(result_cm<CHAOS_THRESHOLD_CM)?transit2(chaos,&fsm):transit2(running,&fsm);
   else if(but.getLong())transit2(midi_setup,&fsm);
   else transit2(standby,&fsm);
   statemaschine(&fsm);
-
-  
-
- 
 }
-

@@ -16,7 +16,6 @@ ChasePLUGS::ChasePLUGS(int numPlugs, unsigned long advanceTime)
     }
 
 int ChasePLUGS::getNextPlug(byte mode){
-    _mode = mode;
     
     if ((millis() - _lastChange) >= _advanceTime) {
         _prevIndex = _currentIndex;
